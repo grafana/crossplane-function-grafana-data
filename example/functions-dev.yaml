@@ -1,0 +1,22 @@
+---
+apiVersion: pkg.crossplane.io/v1beta1
+kind: Function
+metadata:
+  name: function-grafana-data
+  annotations:
+    # This tells crossplane beta render to connect to the function locally.
+    render.crossplane.io/runtime: Development
+spec:
+  # This is ignored when using the Development runtime.
+  package: function-grafana-data
+---
+apiVersion: pkg.crossplane.io/v1
+kind: Function
+metadata:
+  annotations:
+    tanka.dev/namespaced: "false"
+  labels:
+    tanka.dev/environment: c4fa5391064f7af58da64e869c7402a222444334ff5f7a75
+  name: function-patch-and-transform
+spec:
+  package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.9.0

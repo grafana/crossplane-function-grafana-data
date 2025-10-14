@@ -1,0 +1,18 @@
+---
+apiVersion: example.crossplane.io/v1
+kind: XOnCall
+metadata:
+  name: example-xr
+spec:
+  parameters:
+    forProvider:
+      rollingUsers:
+        - - 'name1'
+        - - 'name2'
+      personsToNotify:
+        - 'name3'
+        - 'name4'
+      personsToNotifyNextEachTime:
+        - 'name5'
+        - 'name6'
+        - 'name7'

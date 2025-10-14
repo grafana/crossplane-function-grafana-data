@@ -1,0 +1,43 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-grafana-data
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XOnCallShift
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - base:
+          apiVersion: example.crossplane.io/v1
+          kind: OnCallShift
+          spec:
+            forProvider: {}
+        name: shift
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.rollingUsers
+          toFieldPath: spec.forProvider.rollingUsers
+          type: FromCompositeFieldPath
+      - base:
+          apiVersion: example.crossplane.io/v1
+          kind: Escalation
+          spec:
+            forProvider: {}
+        name: escalation
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.personsToNotify
+          toFieldPath: spec.forProvider.personsToNotify
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.personsToNotifyNextEachTime
+          toFieldPath: spec.forProvider.personsToNotifyNextEachTime
+          type: FromCompositeFieldPath
+  - step: run-the-template
+    functionRef:
+      name: function-grafana-data
+      oncallUrl: 'test'
