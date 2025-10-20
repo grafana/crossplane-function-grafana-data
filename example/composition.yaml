@@ -5,7 +5,7 @@ metadata:
 spec:
   compositeTypeRef:
     apiVersion: example.crossplane.io/v1
-    kind: XOnCallShift
+    kind: XOnCall
   mode: Pipeline
   pipeline:
   - functionRef:
@@ -24,6 +24,9 @@ spec:
         - fromFieldPath: spec.parameters.forProvider.rollingUsers
           toFieldPath: spec.forProvider.rollingUsers
           type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
       - base:
           apiVersion: example.crossplane.io/v1
           kind: Escalation
@@ -36,6 +39,9 @@ spec:
           type: FromCompositeFieldPath
         - fromFieldPath: spec.parameters.forProvider.personsToNotifyNextEachTime
           toFieldPath: spec.forProvider.personsToNotifyNextEachTime
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
   - step: run-the-template
     functionRef:

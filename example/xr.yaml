@@ -5,6 +5,8 @@ metadata:
   name: example-xr
 spec:
   parameters:
+    providerConfigRef:
+      name: pvConf
     forProvider:
       rollingUsers:
         - - 'name1'
