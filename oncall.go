@@ -108,7 +108,7 @@ func (c *OnCallClient) GetUsers(userIDs []string) []string {
 
 // GetRollingUsers looks up rolling users (a nested array)
 func (c *OnCallClient) GetRollingUsers(val [][]string) [][]string {
-	var newVal [][]string
+	newVal := make([][]string, len(val))
 	for _, userIDs := range val {
 		usernames := c.GetUsers(userIDs)
 		newVal = append(newVal, usernames)

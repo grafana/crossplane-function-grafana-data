@@ -55,7 +55,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				continue
 			}
 
-		//dummy to stop linter complaining
+		// dummy to stop linter complaining
 		case "xxx.grafana.crossplane.io":
 			continue
 		}
