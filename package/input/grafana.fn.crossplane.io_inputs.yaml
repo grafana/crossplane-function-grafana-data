@@ -4,9 +4,9 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.16.5
-  name: inputs.template.fn.crossplane.io
+  name: inputs.grafana.fn.crossplane.io
 spec:
-  group: template.fn.crossplane.io
+  group: grafana.fn.crossplane.io
   names:
     categories:
     - crossplane
@@ -38,9 +38,6 @@ spec:
             type: string
           metadata:
             type: object
-          oncallUrl:
-            description: v1beta1.ProviderConfigSpec `json:""`
-            type: string
         type: object
     served: true
     storage: true

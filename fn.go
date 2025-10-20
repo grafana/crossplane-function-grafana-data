@@ -55,7 +55,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				continue
 			}
 		}
-
 	}
 
 	if err := response.SetDesiredComposedResources(rsp, desiredComposed); err != nil {
