@@ -45,28 +45,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		gvk := desired.Resource.GroupVersionKind()
 
 		switch gvk.Kind {
-		case "OnCallShift":
-			client, err := f.getOnCallClient(desired, rsp, req)
-			if err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-			if client == nil {
-				continue
-			}
-
-			path := "spec.forProvider.users"
-			if err := replacePath(desired, path, client.GetUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-			path = "spec.forProvider.rollingUsers"
-			if err := replacePath(desired, path, client.GetRollingUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
 		case "Escalation":
 			client, err := f.getOnCallClient(desired, rsp, req)
 			if err != nil {
@@ -89,7 +67,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				return rsp, nil
 			}
 
-		case "UserNotificationRule":
+		case "OnCallShift":
 			client, err := f.getOnCallClient(desired, rsp, req)
 			if err != nil {
 				response.Fatal(rsp, err)
@@ -99,8 +77,14 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				continue
 			}
 
-			path := "spec.forProvider.userId"
+			path := "spec.forProvider.users"
 			if err := replacePath(desired, path, client.GetUsers); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
+
+			path = "spec.forProvider.rollingUsers"
+			if err := replacePath(desired, path, client.GetRollingUsers); err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
@@ -117,6 +101,22 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 			path := "spec.forProvider.teamId"
 			if err := replacePath(desired, path, client.GetTeamId); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
+
+		case "UserNotificationRule":
+			client, err := f.getOnCallClient(desired, rsp, req)
+			if err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
+			if client == nil {
+				continue
+			}
+
+			path := "spec.forProvider.userId"
+			if err := replacePath(desired, path, client.GetUsers); err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
