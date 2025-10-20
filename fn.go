@@ -62,8 +62,8 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 
-	response.Normalf(rsp, "Successfully Processed OnCallShift")
-
+	response.Normalf(rsp, "Successfully Processed")
+	response.ConditionTrue(rsp, "FunctionSuccess", "Success").TargetCompositeAndClaim()
 	return rsp, nil
 }
 

@@ -38,18 +38,18 @@ func TestRunFunction(t *testing.T) {
 					Meta: &fnv1.RequestMeta{Tag: "hello"},
 					Input: resource.MustStructJSON(`{
 						"apiVersion": "grafana.fn.crossplane.io/v1beta1",
-						"kind": "Input",
-						"example": "Hello, world"
+						"kind": "Input"
 					}`),
 				},
 			},
 			want: want{
 				rsp: &fnv1.RunFunctionResponse{
-					Meta: &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Meta:    &fnv1.ResponseMeta{Tag: "hello", Ttl: durationpb.New(response.DefaultTTL)},
+					Desired: &fnv1.State{},
 					Results: []*fnv1.Result{
 						{
 							Severity: fnv1.Severity_SEVERITY_NORMAL,
-							Message:  "I was run with input \"Hello, world\"!",
+							Message:  "Successfully Processed",
 							Target:   fnv1.Target_TARGET_COMPOSITE.Enum(),
 						},
 					},
