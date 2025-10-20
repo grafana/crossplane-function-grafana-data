@@ -44,83 +44,18 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	for _, desired := range desiredComposed {
 		gvk := desired.Resource.GroupVersionKind()
 
-		switch gvk.Kind {
-		case "Escalation":
-			client, err := f.getOnCallClient(desired, rsp, req)
+		switch gvk.Group {
+		case "oncall.grafana.crossplane.io":
+			cont, err := f.processOncallResource(desired, rsp, req)
 			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
-			if client == nil {
+			if cont {
 				continue
-			}
-
-			path := "spec.forProvider.personsToNotify"
-			if err := replacePath(desired, path, client.GetUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-			path = "spec.forProvider.personsToNotifyNextEachTime"
-			if err := replacePath(desired, path, client.GetUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-		case "OnCallShift":
-			client, err := f.getOnCallClient(desired, rsp, req)
-			if err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-			if client == nil {
-				continue
-			}
-
-			path := "spec.forProvider.users"
-			if err := replacePath(desired, path, client.GetUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-			path = "spec.forProvider.rollingUsers"
-			if err := replacePath(desired, path, client.GetRollingUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-		case "Schedule":
-			client, err := f.getOnCallClient(desired, rsp, req)
-			if err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-			if client == nil {
-				continue
-			}
-
-			path := "spec.forProvider.teamId"
-			if err := replacePath(desired, path, client.GetTeamId); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-
-		case "UserNotificationRule":
-			client, err := f.getOnCallClient(desired, rsp, req)
-			if err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
-			}
-			if client == nil {
-				continue
-			}
-
-			path := "spec.forProvider.userId"
-			if err := replacePath(desired, path, client.GetUsers); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
 			}
 		}
+
 	}
 
 	if err := response.SetDesiredComposedResources(rsp, desiredComposed); err != nil {
@@ -131,6 +66,60 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	response.Normalf(rsp, "Successfully Processed OnCallShift")
 
 	return rsp, nil
+}
+
+func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
+	var providerConfigName string
+	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
+		// return if no value found at path
+		return false, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired)
+	}
+
+	client, ok := f.OnCallClients[providerConfigName]
+	if !ok {
+		providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
+		if err != nil {
+			return false, errors.Wrap(err, "Could not get providerConfig or secret")
+		}
+		if providerConfig == nil || secret == nil {
+			return true, nil
+		}
+		client, err = NewOnCallClient(providerConfig, secret)
+		if err != nil {
+			return false, errors.Wrap(err, "Could not create OnCall client")
+		}
+		f.OnCallClients[providerConfigName] = client
+	}
+
+	gvk := desired.Resource.GroupVersionKind()
+	switch gvk.Kind {
+	case "Escalation":
+		path := "spec.forProvider.personsToNotify"
+		if err := replacePath(desired, path, client.GetUsers); err != nil {
+			return false, err
+		}
+
+		path = "spec.forProvider.personsToNotifyNextEachTime"
+		return false, replacePath(desired, path, client.GetUsers)
+
+	case "OnCallShift":
+		path := "spec.forProvider.users"
+		if err := replacePath(desired, path, client.GetUsers); err != nil {
+			return false, err
+		}
+
+		path = "spec.forProvider.rollingUsers"
+		return false, replacePath(desired, path, client.GetRollingUsers)
+
+	case "Schedule":
+		path := "spec.forProvider.teamId"
+		return false, replacePath(desired, path, client.GetTeamId)
+
+	case "UserNotificationRule":
+		path := "spec.forProvider.userId"
+		return false, replacePath(desired, path, client.GetUsers)
+	}
+	return false, nil
 }
 
 func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(V) V) error {
@@ -211,25 +200,4 @@ func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunc
 		return nil, errors.Wrapf(err, "cannot convert Secret")
 	}
 	return &rs, nil
-}
-
-func (f *Function) getOnCallClient(desired *resource.DesiredComposed, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (*OnCallClient, error) {
-	var providerConfigName string
-	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
-		// return if no value found at path
-		return nil, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired)
-	}
-	client, ok := f.OnCallClients[providerConfigName]
-	if !ok {
-		providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
-		if providerConfig == nil || secret == nil || err != nil {
-			return nil, err
-		}
-		client, err = NewOnCallClient(providerConfig, secret)
-		if err != nil {
-			return nil, err
-		}
-		f.OnCallClients[providerConfigName] = client
-	}
-	return client, nil
 }

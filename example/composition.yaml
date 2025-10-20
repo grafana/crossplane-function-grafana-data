@@ -15,7 +15,7 @@ spec:
       kind: Resources
       resources:
       - base:
-          apiVersion: example.crossplane.io/v1
+          apiVersion: oncall.grafana.crossplane.io/v1
           kind: OnCallShift
           spec:
             forProvider: {}
@@ -28,7 +28,7 @@ spec:
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
       - base:
-          apiVersion: example.crossplane.io/v1
+          apiVersion: oncall.grafana.crossplane.io/v1
           kind: Escalation
           spec:
             forProvider: {}
@@ -44,7 +44,7 @@ spec:
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
       - base:
-          apiVersion: example.crossplane.io/v1
+          apiVersion: oncall.grafana.crossplane.io/v1
           kind: Schedule
           spec:
             forProvider: {}
