@@ -10,6 +10,7 @@ require (
 	github.com/grafana/amixr-api-go-client v0.0.26
 	github.com/grafana/crossplane-provider-grafana v0.38.0
 	google.golang.org/protobuf v1.36.10
+	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
 	sigs.k8s.io/controller-tools v0.16.5
 )
@@ -71,7 +72,6 @@ require (
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	k8s.io/api v0.34.1 // indirect
 	k8s.io/apiextensions-apiserver v0.34.1 // indirect
 	k8s.io/client-go v0.34.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
