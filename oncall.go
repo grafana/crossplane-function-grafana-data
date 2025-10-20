@@ -12,8 +12,10 @@ import (
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 )
 
+// OnCallClients is a map of OnCallClient structs
 type OnCallClients map[string]*OnCallClient
 
+// OnCallClient is a client with convenience methods
 type OnCallClient struct {
 	Client *onCallAPI.Client
 	Users  []*onCallAPI.User
@@ -96,9 +98,9 @@ func (c *OnCallClient) getAllTeams() error {
 
 // GetUsers looks up users and returns the IDs
 func (c *OnCallClient) GetUsers(userIDs []string) []string {
-	var newVal []string
+	newVal := make([]string, len(userIDs))
 	for _, id := range userIDs {
-		userID := c.GetUserId(id)
+		userID := c.GetUserID(id)
 		newVal = append(newVal, userID)
 	}
 	return newVal
@@ -114,8 +116,8 @@ func (c *OnCallClient) GetRollingUsers(val [][]string) [][]string {
 	return newVal
 }
 
-// GetUserId looks up a user
-func (c *OnCallClient) GetUserId(id string) string {
+// GetUserID looks up a user
+func (c *OnCallClient) GetUserID(id string) string {
 	// populate the list if the list is empty
 	if len(c.Users) == 0 {
 		err := c.getAllUsers()
@@ -133,12 +135,12 @@ func (c *OnCallClient) GetUserId(id string) string {
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
-	usernameEmailIdx := slices.IndexFunc(c.Users, func(c *onCallAPI.User) bool {
+	usernameEmailIDx := slices.IndexFunc(c.Users, func(c *onCallAPI.User) bool {
 		return c.Username == id || c.Email == id
 	})
 
-	if usernameEmailIdx != -1 {
-		return c.Users[usernameEmailIdx].ID
+	if usernameEmailIDx != -1 {
+		return c.Users[usernameEmailIDx].ID
 	}
 
 	// ID, username or email not found, return as is
@@ -146,8 +148,8 @@ func (c *OnCallClient) GetUserId(id string) string {
 	return id
 }
 
-// GetTeamId looks up a team
-func (c *OnCallClient) GetTeamId(id string) string {
+// GetTeamID looks up a team
+func (c *OnCallClient) GetTeamID(id string) string {
 	if len(c.Teams) == 0 {
 		err := c.getAllTeams()
 		if err != nil {
@@ -164,12 +166,12 @@ func (c *OnCallClient) GetTeamId(id string) string {
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
-	teamEmailIdx := slices.IndexFunc(c.Teams, func(c *onCallAPI.Team) bool {
+	teamEmailIDx := slices.IndexFunc(c.Teams, func(c *onCallAPI.Team) bool {
 		return c.Name == id || c.Email == id
 	})
 
-	if teamEmailIdx != -1 {
-		return c.Teams[teamEmailIdx].ID
+	if teamEmailIDx != -1 {
+		return c.Teams[teamEmailIDx].ID
 	}
 
 	// ID, name or email not found, return as is

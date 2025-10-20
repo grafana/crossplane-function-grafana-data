@@ -54,6 +54,10 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			if cont {
 				continue
 			}
+
+		//dummy to stop linter complaining
+		case "xxx.grafana.crossplane.io":
+			continue
 		}
 	}
 
@@ -112,7 +116,7 @@ func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp 
 
 	case "Schedule":
 		path := "spec.forProvider.teamId"
-		return false, replacePath(desired, path, client.GetTeamId)
+		return false, replacePath(desired, path, client.GetTeamID)
 
 	case "UserNotificationRule":
 		path := "spec.forProvider.userId"
@@ -170,12 +174,12 @@ func getProviderConfig(rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionReque
 }
 
 func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest, selector *fnv1.ResourceSelector) (*R, error) {
-	key := fmt.Sprintf("%s/%s", selector.Kind, selector.GetMatchName())
+	key := fmt.Sprintf("%s/%s", selector.GetKind(), selector.GetMatchName())
 
-	if rsp.Requirements == nil {
+	if rsp.GetRequirements() == nil {
 		rsp.Requirements = &fnv1.Requirements{}
 	}
-	if rsp.Requirements.ExtraResources == nil {
+	if rsp.Requirements.GetExtraResources() == nil {
 		rsp.Requirements.ExtraResources = make(map[string]*fnv1.ResourceSelector)
 	}
 	rsp.Requirements.ExtraResources[key] = selector
