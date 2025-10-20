@@ -20,9 +20,13 @@ type OnCallClient struct {
 	Teams  []*onCallAPI.Team
 }
 
+// NewOnCallClient returns a client with convenience methods
 func NewOnCallClient(providerConfig *v1beta1.ProviderConfig, secret *v1.Secret) (*OnCallClient, error) {
 	var credentials map[string]string
-	json.Unmarshal(secret.Data["instanceCredentials"], &credentials)
+	err := json.Unmarshal(secret.Data["instanceCredentials"], &credentials)
+	if err != nil {
+		return nil, err
+	}
 
 	if providerConfig.Spec.OnCallURL != "" {
 		credentials["oncall_url"] = providerConfig.Spec.OnCallURL
@@ -90,24 +94,27 @@ func (c *OnCallClient) getAllTeams() error {
 	return nil
 }
 
-func (c *OnCallClient) GetUsers(userIds []string) []string {
+// GetUsers looks up users and returns the IDs
+func (c *OnCallClient) GetUsers(userIDs []string) []string {
 	var newVal []string
-	for _, id := range userIds {
-		userId := c.GetUserId(id)
-		newVal = append(newVal, userId)
+	for _, id := range userIDs {
+		userID := c.GetUserId(id)
+		newVal = append(newVal, userID)
 	}
 	return newVal
 }
 
+// GetRollingUsers looks up rolling users (a nested array)
 func (c *OnCallClient) GetRollingUsers(val [][]string) [][]string {
 	var newVal [][]string
-	for _, userIds := range val {
-		usernames := c.GetUsers(userIds)
+	for _, userIDs := range val {
+		usernames := c.GetUsers(userIDs)
 		newVal = append(newVal, usernames)
 	}
 	return newVal
 }
 
+// GetUserId looks up a user
 func (c *OnCallClient) GetUserId(id string) string {
 	// populate the list if the list is empty
 	if len(c.Users) == 0 {
@@ -139,6 +146,7 @@ func (c *OnCallClient) GetUserId(id string) string {
 	return id
 }
 
+// GetTeamId looks up a team
 func (c *OnCallClient) GetTeamId(id string) string {
 	if len(c.Teams) == 0 {
 		err := c.getAllTeams()
@@ -161,7 +169,7 @@ func (c *OnCallClient) GetTeamId(id string) string {
 	})
 
 	if teamEmailIdx != -1 {
-		return c.Users[teamEmailIdx].ID
+		return c.Teams[teamEmailIdx].ID
 	}
 
 	// ID, name or email not found, return as is
