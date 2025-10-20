@@ -8,8 +8,9 @@ spec:
     providerConfigRef:
       name: pvConf
     forProvider:
+      teamId: "Alerting"
       rollingUsers:
-        - - 'name1'
+        - - 'jeroen@grafana.com'
         - - 'name2'
       personsToNotify:
         - 'name3'

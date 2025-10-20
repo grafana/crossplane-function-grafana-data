@@ -43,6 +43,19 @@ spec:
         - fromFieldPath: spec.parameters.providerConfigRef
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
+      - base:
+          apiVersion: example.crossplane.io/v1
+          kind: Schedule
+          spec:
+            forProvider: {}
+        name: schedule
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.teamId
+          toFieldPath: spec.forProvider.teamId
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
   - step: run-the-template
     functionRef:
       name: function-grafana-data

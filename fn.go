@@ -30,6 +30,8 @@ type Function struct {
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "grafana-data", req.GetMeta().GetTag())
 
+	f.OnCallClients = make(OnCallClients)
+
 	rsp := response.To(req, response.DefaultTTL)
 
 	// The composed resources desired by any previous Functions in the pipeline.
@@ -45,9 +47,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		switch gvk.Kind {
 		case "OnCallShift":
 			client, err := f.getOnCallClient(desired, rsp, req)
-			if client == nil || err != nil {
+			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
+			}
+			if client == nil {
+				continue
 			}
 
 			path := "spec.forProvider.users"
@@ -64,9 +69,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		case "Escalation":
 			client, err := f.getOnCallClient(desired, rsp, req)
-			if client == nil || err != nil {
+			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
+			}
+			if client == nil {
+				continue
 			}
 
 			path := "spec.forProvider.personsToNotify"
@@ -83,9 +91,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		case "UserNotificationRule":
 			client, err := f.getOnCallClient(desired, rsp, req)
-			if client == nil || err != nil {
+			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
+			}
+			if client == nil {
+				continue
 			}
 
 			path := "spec.forProvider.userId"
@@ -96,9 +107,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		case "Schedule":
 			client, err := f.getOnCallClient(desired, rsp, req)
-			if client == nil || err != nil {
+			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
+			}
+			if client == nil {
+				continue
 			}
 
 			path := "spec.forProvider.teamId"
@@ -211,7 +225,10 @@ func (f *Function) getOnCallClient(desired *resource.DesiredComposed, rsp *fnv1.
 		if providerConfig == nil || secret == nil || err != nil {
 			return nil, err
 		}
-		client = NewOnCallClient(providerConfig, secret)
+		client, err = NewOnCallClient(providerConfig, secret)
+		if err != nil {
+			return nil, err
+		}
 		f.OnCallClients[providerConfigName] = client
 	}
 	return client, nil

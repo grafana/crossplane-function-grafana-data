@@ -10,6 +10,6 @@ spec:
       name: grafana-instance
       namespace: crossplane
     source: Secret
-  oncallUrl: https://oncall-ops-eu-south-0.grafana.net/oncall/
+  oncallUrl: https://oncall-ops-eu-south-0.grafana-ops.net/oncall/
   smUrl: https://synthetic-monitoring-api-eu-south-0.grafana-ops.net
   url: https://ops.grafana-ops.net
