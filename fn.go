@@ -11,7 +11,6 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
-
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -71,6 +70,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
+//nolint:gocyclo // TODO: move providerConfig code into separate method
 func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
 	var providerConfigName string
 	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
@@ -128,7 +128,7 @@ func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp 
 func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(V) V) error {
 	var val V
 	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto(path, &val); err != nil {
-		// return if no value found at path
+		//nolint:nilerr // simply return if no value found at path
 		return nil
 	}
 
@@ -179,7 +179,7 @@ func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunc
 	if rsp.GetRequirements() == nil {
 		rsp.Requirements = &fnv1.Requirements{}
 	}
-	if rsp.Requirements.GetExtraResources() == nil {
+	if rsp.GetRequirements().GetExtraResources() == nil {
 		rsp.Requirements.ExtraResources = make(map[string]*fnv1.ResourceSelector)
 	}
 	rsp.Requirements.ExtraResources[key] = selector

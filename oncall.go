@@ -5,11 +5,9 @@ import (
 	"slices"
 
 	"github.com/crossplane/function-sdk-go/errors"
-
+	onCallAPI "github.com/grafana/amixr-api-go-client"
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	v1 "k8s.io/api/core/v1"
-
-	onCallAPI "github.com/grafana/amixr-api-go-client"
 )
 
 // OnCallClients is a map of OnCallClient structs
