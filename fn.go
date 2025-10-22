@@ -97,7 +97,12 @@ func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp 
 	gvk := desired.Resource.GroupVersionKind()
 	switch gvk.Kind {
 	case "Escalation":
-		path := "spec.forProvider.personsToNotify"
+		path := "spec.forProvider.notifyOnCallFromSchedule"
+		if err := replacePath(desired, path, client.GetScheduleID); err != nil {
+			return false, err
+		}
+
+		path = "spec.forProvider.personsToNotify"
 		if err := replacePath(desired, path, client.GetUsers); err != nil {
 			return false, err
 		}

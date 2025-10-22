@@ -53,14 +53,14 @@ func (c *OnCallClient) getAllUsers() error {
 				Page: page,
 			},
 		}
-		usersResponse, _, err := c.Client.Users.ListUsers(options)
+		response, _, err := c.Client.Users.ListUsers(options)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to list oncall users")
 		}
 
-		allUsers = append(allUsers, usersResponse.Users...)
+		allUsers = append(allUsers, response.Users...)
 
-		if usersResponse.PaginatedResponse.Next == nil {
+		if response.PaginatedResponse.Next == nil {
 			break
 		}
 		page++
@@ -78,14 +78,14 @@ func (c *OnCallClient) getAllTeams() error {
 				Page: page,
 			},
 		}
-		teamsResponse, _, err := c.Client.Teams.ListTeams(options)
+		response, _, err := c.Client.Teams.ListTeams(options)
 		if err != nil {
 			return errors.Wrapf(err, "Failed to list oncall users")
 		}
 
-		allTeams = append(allTeams, teamsResponse.Teams...)
+		allTeams = append(allTeams, response.Teams...)
 
-		if teamsResponse.PaginatedResponse.Next == nil {
+		if response.PaginatedResponse.Next == nil {
 			break
 		}
 		page++
@@ -96,7 +96,7 @@ func (c *OnCallClient) getAllTeams() error {
 
 // GetUsers looks up users and returns the IDs
 func (c *OnCallClient) GetUsers(userIDs []string) []string {
-	newVal := make([]string, len(userIDs))
+	newVal := []string{}
 	for _, id := range userIDs {
 		userID := c.GetUserID(id)
 		newVal = append(newVal, userID)
@@ -106,7 +106,7 @@ func (c *OnCallClient) GetUsers(userIDs []string) []string {
 
 // GetRollingUsers looks up rolling users (a nested array)
 func (c *OnCallClient) GetRollingUsers(val [][]string) [][]string {
-	newVal := make([][]string, len(val))
+	newVal := [][]string{}
 	for _, userIDs := range val {
 		usernames := c.GetUsers(userIDs)
 		newVal = append(newVal, usernames)
@@ -175,4 +175,18 @@ func (c *OnCallClient) GetTeamID(id string) string {
 	// ID, name or email not found, return as is
 	// TODO: consider failing here
 	return id
+}
+
+func (c *OnCallClient) GetScheduleID(id string) string {
+	options := &onCallAPI.ListScheduleOptions{
+		Name: id,
+	}
+	response, _, err := c.Client.Schedules.ListSchedules(options)
+	if err != nil {
+		return id
+		// TODO: figure out how to handle errors
+		//return errors.Wrapf(err, "Failed to list oncall schedules")
+	}
+
+	return response.Schedules[0].ID
 }

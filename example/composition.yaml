@@ -40,6 +40,9 @@ spec:
         - fromFieldPath: spec.parameters.forProvider.personsToNotifyNextEachTime
           toFieldPath: spec.forProvider.personsToNotifyNextEachTime
           type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.notifyOnCallFromSchedule
+          toFieldPath: spec.forProvider.notifyOnCallFromSchedule
+          type: FromCompositeFieldPath
         - fromFieldPath: spec.parameters.providerConfigRef
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
