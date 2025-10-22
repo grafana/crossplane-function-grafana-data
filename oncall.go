@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"slices"
 
-	"github.com/crossplane/function-sdk-go/errors"
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // OnCallClients is a map of OnCallClient structs
@@ -177,6 +178,7 @@ func (c *OnCallClient) GetTeamID(id string) string {
 	return id
 }
 
+// GetScheduleID looks up a schedule
 func (c *OnCallClient) GetScheduleID(id string) string {
 	options := &onCallAPI.ListScheduleOptions{
 		Name: id,
@@ -185,7 +187,7 @@ func (c *OnCallClient) GetScheduleID(id string) string {
 	if err != nil {
 		return id
 		// TODO: figure out how to handle errors
-		//return errors.Wrapf(err, "Failed to list oncall schedules")
+		// return errors.Wrapf(err, "Failed to list oncall schedules")
 	}
 
 	return response.Schedules[0].ID

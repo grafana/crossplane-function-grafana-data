@@ -4,6 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
+	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/function-sdk-go/errors"
 	"github.com/crossplane/function-sdk-go/logging"
@@ -11,9 +15,6 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Function returns whatever response you ask it to.
@@ -45,14 +46,15 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		switch gvk.Group {
 		case "oncall.grafana.crossplane.io":
-			cont, err := f.processOncallResource(desired, rsp, req)
+			_, err := f.processOncallResource(desired, rsp, req)
 			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
-			if cont {
-				continue
-			}
+			// Uncomment this when there are more than one groups cases
+			// if cont {
+			// 	continue
+			// }
 
 		// dummy to stop linter complaining
 		case "xxx.grafana.crossplane.io":
