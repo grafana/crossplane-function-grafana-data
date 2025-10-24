@@ -61,7 +61,7 @@ func (c *OnCallClient) getAllUsers() error {
 
 		allUsers = append(allUsers, response.Users...)
 
-		if response.PaginatedResponse.Next == nil {
+		if response.Next == nil {
 			break
 		}
 		page++
@@ -86,7 +86,7 @@ func (c *OnCallClient) getAllTeams() error {
 
 		allTeams = append(allTeams, response.Teams...)
 
-		if response.PaginatedResponse.Next == nil {
+		if response.Next == nil {
 			break
 		}
 		page++
