@@ -186,12 +186,12 @@ func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunc
 	if rsp.GetRequirements() == nil {
 		rsp.Requirements = &fnv1.Requirements{}
 	}
-	if rsp.GetRequirements().GetExtraResources() == nil {
-		rsp.Requirements.ExtraResources = make(map[string]*fnv1.ResourceSelector)
+	if rsp.GetRequirements().GetResources() == nil {
+		rsp.Requirements.Resources = make(map[string]*fnv1.ResourceSelector)
 	}
-	rsp.Requirements.ExtraResources[key] = selector
+	rsp.Requirements.Resources[key] = selector
 
-	requiredResources, err := request.GetExtraResources(req)
+	requiredResources, err := request.GetRequiredResources(req)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot get requiredResources resources with secret")
 	}
