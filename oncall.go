@@ -6,6 +6,7 @@ import (
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 
 	"github.com/crossplane/function-sdk-go/errors"
+	"github.com/crossplane/function-sdk-go/resource"
 )
 
 // OnCallClient is a client with convenience methods
@@ -16,13 +17,10 @@ type OnCallClient struct {
 }
 
 // NewOnCallClient returns a client with convenience methods
-func NewOnCallClient(client *onCallAPI.Client) (*OnCallClient, error) {
-	if client.Teams == nil {
-		return nil, errors.Errorf("client is nil")
-	}
+func NewOnCallClient(client *onCallAPI.Client) *OnCallClient {
 	return &OnCallClient{
 		Client: client,
-	}, nil
+	}
 }
 
 func (c *OnCallClient) getAllUsers() error {
@@ -47,6 +45,43 @@ func (c *OnCallClient) getAllUsers() error {
 		page++
 	}
 	c.Users = allUsers
+	return nil
+}
+
+func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
+	gvk := desired.Resource.GroupVersionKind()
+	switch gvk.Kind {
+	case "Escalation":
+		path := "spec.forProvider.notifyOnCallFromSchedule"
+		if err := replacePath(desired, path, c.GetScheduleID); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.personsToNotify"
+		if err := replacePath(desired, path, c.GetUsers); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.personsToNotifyNextEachTime"
+		return replacePath(desired, path, c.GetUsers)
+
+	case "OnCallShift":
+		path := "spec.forProvider.users"
+		if err := replacePath(desired, path, c.GetUsers); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.rollingUsers"
+		return replacePath(desired, path, c.GetRollingUsers)
+
+	case "Schedule":
+		path := "spec.forProvider.teamId"
+		return replacePath(desired, path, c.GetTeamID)
+
+	case "UserNotificationRule":
+		path := "spec.forProvider.userId"
+		return replacePath(desired, path, c.GetUsers)
+	}
 	return nil
 }
 

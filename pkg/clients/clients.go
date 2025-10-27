@@ -1,14 +1,11 @@
+// Package clients provides a way to create clients from the Grafana Crossplane providerConfig using the Grafana Terraform provider
 package clients
 
 import (
 	"encoding/json"
 
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-	v1 "k8s.io/api/core/v1"
-
 	onCallAPI "github.com/grafana/amixr-api-go-client"
+	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	assertsapi "github.com/grafana/grafana-asserts-public-clients/go/gcom"
 	"github.com/grafana/grafana-com-public-clients/go/gcom"
@@ -17,13 +14,12 @@ import (
 	"github.com/grafana/machine-learning-go-client/mlapi"
 	"github.com/grafana/slo-openapi-client/go/slo"
 	SMAPI "github.com/grafana/synthetic-monitoring-api-go-client"
-	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/cloudproviderapi"
-	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/connectionsapi"
-	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/fleetmanagementapi"
-	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/frontendo11yapi"
-	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/k6providerapi"
+	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	v1 "k8s.io/api/core/v1"
 )
 
+// Client struct with all known clients (~copy/paste from TF provider)
 type Client struct {
 	GrafanaAPI            *goapi.GrafanaHTTPAPI
 	GrafanaAppPlatformAPI *k8s.ClientRegistry
@@ -35,13 +31,14 @@ type Client struct {
 	AssertsAPIClient      *assertsapi.APIClient
 	K6APIClient           *k6.APIClient
 	// in internal package
-	//CloudProviderAPI      *cloudproviderapi.Client
-	//ConnectionsAPIClient  *connectionsapi.Client
-	//FleetManagementClient *fleetmanagementapi.Client
-	//FrontendO11yAPIClient *frontendo11yapi.Client
-	//K6APIConfig *k6providerapi.K6APIConfig
+	// CloudProviderAPI      *cloudproviderapi.Client
+	// ConnectionsAPIClient  *connectionsapi.Client
+	// FleetManagementClient *fleetmanagementapi.Client
+	// FrontendO11yAPIClient *frontendo11yapi.Client
+	// K6APIConfig *k6providerapi.K6APIConfig
 }
 
+// NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/secret
 func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret, secretKey string) (*Client, error) {
 	var credentials map[string]string
 	err := json.Unmarshal(secret.Data[secretKey], &credentials)

@@ -9,6 +9,14 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/amixr-api-go-client v0.0.26
 	github.com/grafana/crossplane-provider-grafana v0.40.0
+	github.com/grafana/grafana-app-sdk v0.45.0
+	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20250916172812-b0f2b75c0d34
+	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20250526074454-7ec66e02e4bb
+	github.com/grafana/grafana-openapi-client-go v0.0.0-20250617151817-c0f8cbb88d5c
+	github.com/grafana/k6-cloud-openapi-client-go v0.0.0-20251022100644-dd6cfbb68f85
+	github.com/grafana/machine-learning-go-client v0.8.2
+	github.com/grafana/slo-openapi-client/go/slo v0.0.0-20250218172929-ab9cae090da6
+	github.com/grafana/synthetic-monitoring-api-go-client v0.17.1
 	github.com/grafana/terraform-provider-grafana/v4 v4.12.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
 	google.golang.org/protobuf v1.36.10
@@ -67,24 +75,16 @@ require (
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/authlib/claims v0.0.0-20250120084028-e3328c576437 // indirect
 	github.com/grafana/fleet-management-api v1.0.0 // indirect
-	github.com/grafana/grafana-app-sdk v0.45.0 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.43.2 // indirect
-	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20250916172812-b0f2b75c0d34 // indirect
-	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20250526074454-7ec66e02e4bb // indirect
-	github.com/grafana/grafana-openapi-client-go v0.0.0-20250617151817-c0f8cbb88d5c // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // indirect
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-20250925121631-89b988ca553e // indirect
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250424064802-2fbb2d6f5d27 // indirect
 	github.com/grafana/grafana/apps/playlist v0.0.0-20250424064802-2fbb2d6f5d27 // indirect
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250901080157-a0280d701b28 // indirect
-	github.com/grafana/k6-cloud-openapi-client-go v0.0.0-20251022100644-dd6cfbb68f85 // indirect
-	github.com/grafana/machine-learning-go-client v0.8.2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grafana/river v0.3.0 // indirect
-	github.com/grafana/slo-openapi-client/go/slo v0.0.0-20250218172929-ab9cae090da6 // indirect
 	github.com/grafana/synthetic-monitoring-agent v0.43.1 // indirect
-	github.com/grafana/synthetic-monitoring-api-go-client v0.17.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect

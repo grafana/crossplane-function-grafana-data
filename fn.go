@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,8 +16,6 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
-
-	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 )
 
 // Function returns whatever response you ask it to.
@@ -46,17 +45,29 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	for _, desired := range desiredComposed {
 		gvk := desired.Resource.GroupVersionKind()
 
+		var providerConfigName string
+		if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
+			// return if no value found at path
+			response.Fatal(rsp, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired))
+			return rsp, nil
+		}
+
+		cont, err := f.getClients(providerConfigName, rsp, req)
+		if err != nil {
+			response.Fatal(rsp, err)
+			return rsp, nil
+		}
+		if cont {
+			// grabbing the providerConfig and secret for setting up the clients might need a few roundtrips
+			continue
+		}
+
 		switch gvk.Group {
 		case "oncall.grafana.crossplane.io":
-			_, err := f.processOncallResource(desired, rsp, req)
-			if err != nil {
+			if err := NewOnCallClient(f.Clients[providerConfigName].OnCallClient).Process(desired); err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
-			// Uncomment this when there are more than one groups cases
-			// if cont {
-			// 	continue
-			// }
 
 		// dummy to stop linter complaining
 		case "xxx.grafana.crossplane.io":
@@ -74,68 +85,25 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
-//nolint:gocyclo // TODO: move providerConfig code into separate method
-func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
-	var providerConfigName string
-	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
-		// return if no value found at path
-		return false, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired)
+func (f *Function) getClients(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
+	if _, ok := f.Clients[providerConfigName]; ok {
+		return false, nil
 	}
 
-	if _, ok := f.Clients[providerConfigName]; !ok {
-		providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
-		if err != nil {
-			return false, errors.Wrap(err, "Could not get providerConfig or secret")
-		}
-		if providerConfig == nil || secret == nil {
-			return true, nil
-		}
-
-		cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
-		if err != nil {
-			return false, err
-		}
-		f.Clients[providerConfigName] = cs
-	}
-
-	client, err := NewOnCallClient(f.Clients[providerConfigName].OnCallClient)
+	providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
 	if err != nil {
-		return false, errors.Wrap(err, "Could not create OnCall client")
+		return false, errors.Wrap(err, "Could not get providerConfig or secret")
+	}
+	if providerConfig == nil || secret == nil {
+		return true, nil
 	}
 
-	gvk := desired.Resource.GroupVersionKind()
-	switch gvk.Kind {
-	case "Escalation":
-		path := "spec.forProvider.notifyOnCallFromSchedule"
-		if err := replacePath(desired, path, client.GetScheduleID); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.personsToNotify"
-		if err := replacePath(desired, path, client.GetUsers); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.personsToNotifyNextEachTime"
-		return false, replacePath(desired, path, client.GetUsers)
-
-	case "OnCallShift":
-		path := "spec.forProvider.users"
-		if err := replacePath(desired, path, client.GetUsers); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.rollingUsers"
-		return false, replacePath(desired, path, client.GetRollingUsers)
-
-	case "Schedule":
-		path := "spec.forProvider.teamId"
-		return false, replacePath(desired, path, client.GetTeamID)
-
-	case "UserNotificationRule":
-		path := "spec.forProvider.userId"
-		return false, replacePath(desired, path, client.GetUsers)
+	cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
+	if err != nil {
+		return false, err
 	}
+
+	f.Clients[providerConfigName] = cs
 	return false, nil
 }
 
