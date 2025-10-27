@@ -2,12 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/function-sdk-go/errors"
@@ -51,7 +47,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		}
 
 		if _, ok := clientMap[providerConfigName]; !ok {
-			cs, err := getClients(providerConfigName, rsp, req)
+			cf := clientsFetcher{
+				req:                req,
+				rsp:                rsp,
+				providerConfigName: providerConfigName,
+			}
+			cs, err := cf.getClients()
 			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
@@ -101,84 +102,4 @@ func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(
 	}
 
 	return nil
-}
-
-func getClients(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (*clients.Client, error) {
-	providerConfig, secret, err := getProviderConfig(providerConfigName, rsp, req)
-	if err != nil {
-		return nil, errors.Wrap(err, "Could not get providerConfig or secret")
-	}
-	if providerConfig == nil || secret == nil {
-		return nil, nil
-	}
-
-	cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
-	if err != nil {
-		return nil, err
-	}
-
-	return cs, nil
-}
-
-func getProviderConfig(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (*v1beta1.ProviderConfig, *v1.Secret, error) {
-	providerConfig, err := getRequiredResource[v1beta1.ProviderConfig](rsp, req,
-		&fnv1.ResourceSelector{
-			ApiVersion: "grafana.crossplane.io/v1beta1",
-			Kind:       "ProviderConfig",
-			Match: &fnv1.ResourceSelector_MatchName{
-				MatchName: providerConfigName,
-			},
-		},
-	)
-
-	if providerConfig == nil || err != nil {
-		return nil, nil, err
-	}
-
-	secret, err := getRequiredResource[v1.Secret](rsp, req,
-		&fnv1.ResourceSelector{
-			ApiVersion: "v1",
-			Kind:       "Secret",
-			Namespace:  &providerConfig.Spec.Credentials.SecretRef.Namespace,
-			Match: &fnv1.ResourceSelector_MatchName{
-				MatchName: providerConfig.Spec.Credentials.SecretRef.Name,
-			},
-		},
-	)
-	if secret == nil || err != nil {
-		return nil, nil, err
-	}
-	return providerConfig, secret, nil
-}
-
-func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest, selector *fnv1.ResourceSelector) (*R, error) {
-	key := fmt.Sprintf("%s/%s", selector.GetKind(), selector.GetMatchName())
-
-	if rsp.GetRequirements() == nil {
-		rsp.Requirements = &fnv1.Requirements{}
-	}
-	if rsp.GetRequirements().GetResources() == nil {
-		rsp.Requirements.Resources = make(map[string]*fnv1.ResourceSelector)
-	}
-	rsp.Requirements.Resources[key] = selector
-
-	requiredResources, err := request.GetRequiredResources(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot get requiredResources resources with secret")
-	}
-	rr, ok := requiredResources[key]
-	if !ok {
-		return nil, nil
-	}
-
-	if len(rr) > 1 {
-		return nil, errors.Errorf("Too many resources returned")
-	}
-
-	var rs R
-	if err = runtime.DefaultUnstructuredConverter.
-		FromUnstructured(rr[0].Resource.Object, &rs); err != nil {
-		return nil, errors.Wrapf(err, "cannot convert Secret")
-	}
-	return &rs, nil
 }
