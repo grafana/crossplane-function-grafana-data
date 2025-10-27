@@ -23,15 +23,13 @@ type Function struct {
 	fnv1.FunctionRunnerServiceServer
 
 	log logging.Logger
-
-	Clients map[string]*clients.Client
 }
 
 // RunFunction runs the Function.
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "grafana-data", req.GetMeta().GetTag())
 
-	f.Clients = make(map[string]*clients.Client)
+	clientMap := make(map[string]*clients.Client)
 
 	rsp := response.To(req, response.DefaultTTL)
 
@@ -52,19 +50,22 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			return rsp, nil
 		}
 
-		cont, err := f.getClients(providerConfigName, rsp, req)
-		if err != nil {
-			response.Fatal(rsp, err)
-			return rsp, nil
-		}
-		if cont {
-			// grabbing the providerConfig and secret for setting up the clients might need a few roundtrips
-			continue
+		if _, ok := clientMap[providerConfigName]; !ok {
+			cs, err := getClients(providerConfigName, rsp, req)
+			if err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
+			if cs == nil {
+				// grabbing the providerConfig and secret for setting up the clients might need a few roundtrips
+				continue
+			}
+			clientMap[providerConfigName] = cs
 		}
 
 		switch gvk.Group {
 		case "oncall.grafana.crossplane.io":
-			if err := NewOnCallClient(f.Clients[providerConfigName].OnCallClient).Process(desired); err != nil {
+			if err := NewOnCallClient(clientMap[providerConfigName].OnCallClient).Process(desired); err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
@@ -85,28 +86,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
-func (f *Function) getClients(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
-	if _, ok := f.Clients[providerConfigName]; ok {
-		return false, nil
-	}
-
-	providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
-	if err != nil {
-		return false, errors.Wrap(err, "Could not get providerConfig or secret")
-	}
-	if providerConfig == nil || secret == nil {
-		return true, nil
-	}
-
-	cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
-	if err != nil {
-		return false, err
-	}
-
-	f.Clients[providerConfigName] = cs
-	return false, nil
-}
-
 func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(V) V) error {
 	var val V
 	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto(path, &val); err != nil {
@@ -124,7 +103,24 @@ func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(
 	return nil
 }
 
-func getProviderConfig(rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest, providerConfigName string) (*v1beta1.ProviderConfig, *v1.Secret, error) {
+func getClients(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (*clients.Client, error) {
+	providerConfig, secret, err := getProviderConfig(providerConfigName, rsp, req)
+	if err != nil {
+		return nil, errors.Wrap(err, "Could not get providerConfig or secret")
+	}
+	if providerConfig == nil || secret == nil {
+		return nil, nil
+	}
+
+	cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
+	if err != nil {
+		return nil, err
+	}
+
+	return cs, nil
+}
+
+func getProviderConfig(providerConfigName string, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (*v1beta1.ProviderConfig, *v1.Secret, error) {
 	providerConfig, err := getRequiredResource[v1beta1.ProviderConfig](rsp, req,
 		&fnv1.ResourceSelector{
 			ApiVersion: "grafana.crossplane.io/v1beta1",
