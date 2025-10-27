@@ -29,19 +29,17 @@ func NewOnCallClient(providerConfig *v1beta1.ProviderConfig, secret *v1.Secret) 
 		return nil, err
 	}
 
-	if providerConfig.Spec.OnCallURL != "" {
-		credentials["oncall_url"] = providerConfig.Spec.OnCallURL
-	}
-
-	if providerConfig.Spec.URL != "" {
-		credentials["url"] = providerConfig.Spec.URL
-	}
-	client, err := onCallAPI.NewWithGrafanaURL(credentials["oncall_url"], credentials["auth"], credentials["url"])
+	client, err := NewClientFromProviderConfig(providerConfig, credentials, "oncall")
 	if err != nil {
 		return nil, err
 	}
+
+	c := client.(*onCallAPI.Client)
+	if c.Teams == nil {
+		return nil, errors.Errorf("client is nil")
+	}
 	return &OnCallClient{
-		Client: client,
+		Client: c,
 	}, nil
 }
 
