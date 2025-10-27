@@ -1,15 +1,56 @@
-package main
+package clients
 
 import (
-	"fmt"
+	"encoding/json"
 
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	v1 "k8s.io/api/core/v1"
+
+	onCallAPI "github.com/grafana/amixr-api-go-client"
+	"github.com/grafana/grafana-app-sdk/k8s"
+	assertsapi "github.com/grafana/grafana-asserts-public-clients/go/gcom"
+	"github.com/grafana/grafana-com-public-clients/go/gcom"
+	goapi "github.com/grafana/grafana-openapi-client-go/client"
+	"github.com/grafana/k6-cloud-openapi-client-go/k6"
+	"github.com/grafana/machine-learning-go-client/mlapi"
+	"github.com/grafana/slo-openapi-client/go/slo"
+	SMAPI "github.com/grafana/synthetic-monitoring-api-go-client"
+	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/cloudproviderapi"
+	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/connectionsapi"
+	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/fleetmanagementapi"
+	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/frontendo11yapi"
+	//"github.com/grafana/terraform-provider-grafana/v4/internal/common/k6providerapi"
 )
 
-func NewClientFromProviderConfig(pc *v1beta1.ProviderConfig, creds map[string]string, clientType string) (any, error) {
-	crcfg := createCrossplaneConfiguration(pc, creds)
+type Client struct {
+	GrafanaAPI            *goapi.GrafanaHTTPAPI
+	GrafanaAppPlatformAPI *k8s.ClientRegistry
+	GrafanaCloudAPI       *gcom.APIClient
+	SMAPI                 *SMAPI.Client
+	MLAPI                 *mlapi.Client
+	OnCallClient          *onCallAPI.Client
+	SLOClient             *slo.APIClient
+	AssertsAPIClient      *assertsapi.APIClient
+	K6APIClient           *k6.APIClient
+	// in internal package
+	//CloudProviderAPI      *cloudproviderapi.Client
+	//ConnectionsAPIClient  *connectionsapi.Client
+	//FleetManagementClient *fleetmanagementapi.Client
+	//FrontendO11yAPIClient *frontendo11yapi.Client
+	//K6APIConfig *k6providerapi.K6APIConfig
+}
+
+func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret, secretKey string) (*Client, error) {
+	var credentials map[string]string
+	err := json.Unmarshal(secret.Data[secretKey], &credentials)
+	if err != nil {
+		return nil, err
+	}
+
+	crcfg := createCrossplaneConfiguration(pc, credentials)
+
 	cfg, err := createTFConfiguration(crcfg)
 	if err != nil {
 		return nil, err
@@ -20,15 +61,24 @@ func NewClientFromProviderConfig(pc *v1beta1.ProviderConfig, creds map[string]st
 		return nil, err
 	}
 
-	switch clientType {
-	case "oncall":
-		return clients.OnCallClient, nil
+	client := Client{
+		GrafanaAPI:            clients.GrafanaAPI,
+		GrafanaAppPlatformAPI: clients.GrafanaAppPlatformAPI,
+		GrafanaCloudAPI:       clients.GrafanaCloudAPI,
+		SMAPI:                 clients.SMAPI,
+		MLAPI:                 clients.MLAPI,
+		OnCallClient:          clients.OnCallClient,
+		SLOClient:             clients.SLOClient,
+		AssertsAPIClient:      clients.AssertsAPIClient,
+		K6APIClient:           clients.K6APIClient,
 	}
 
-	return nil, fmt.Errorf("client not found")
+	return &client, nil
 }
 
 // CreateConfiguration from the Crossplane ProviderConfig
+//
+//nolint:gocyclo // ignore
 func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]string) map[string]any {
 	// Set credentials in Terraform provider configuration.
 	// https://registry.terraform.io/providers/grafana/grafana/latest/docs

@@ -15,6 +15,8 @@ import (
 	"github.com/crossplane/function-sdk-go/request"
 	"github.com/crossplane/function-sdk-go/resource"
 	"github.com/crossplane/function-sdk-go/response"
+
+	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 )
 
 // Function returns whatever response you ask it to.
@@ -23,14 +25,14 @@ type Function struct {
 
 	log logging.Logger
 
-	OnCallClients OnCallClients
+	Clients map[string]*clients.Client
 }
 
 // RunFunction runs the Function.
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "grafana-data", req.GetMeta().GetTag())
 
-	f.OnCallClients = make(OnCallClients)
+	f.Clients = make(map[string]*clients.Client)
 
 	rsp := response.To(req, response.DefaultTTL)
 
@@ -80,8 +82,7 @@ func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp 
 		return false, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired)
 	}
 
-	client, ok := f.OnCallClients[providerConfigName]
-	if !ok {
+	if _, ok := f.Clients[providerConfigName]; !ok {
 		providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
 		if err != nil {
 			return false, errors.Wrap(err, "Could not get providerConfig or secret")
@@ -89,11 +90,17 @@ func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp 
 		if providerConfig == nil || secret == nil {
 			return true, nil
 		}
-		client, err = NewOnCallClient(providerConfig, secret)
+
+		cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
 		if err != nil {
-			return false, errors.Wrap(err, "Could not create OnCall client")
+			return false, err
 		}
-		f.OnCallClients[providerConfigName] = client
+		f.Clients[providerConfigName] = cs
+	}
+
+	client, err := NewOnCallClient(f.Clients[providerConfigName].OnCallClient)
+	if err != nil {
+		return false, errors.Wrap(err, "Could not create OnCall client")
 	}
 
 	gvk := desired.Resource.GroupVersionKind()

@@ -1,18 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"slices"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	v1 "k8s.io/api/core/v1"
 
 	"github.com/crossplane/function-sdk-go/errors"
 )
-
-// OnCallClients is a map of OnCallClient structs
-type OnCallClients map[string]*OnCallClient
 
 // OnCallClient is a client with convenience methods
 type OnCallClient struct {
@@ -22,24 +16,12 @@ type OnCallClient struct {
 }
 
 // NewOnCallClient returns a client with convenience methods
-func NewOnCallClient(providerConfig *v1beta1.ProviderConfig, secret *v1.Secret) (*OnCallClient, error) {
-	var credentials map[string]string
-	err := json.Unmarshal(secret.Data["instanceCredentials"], &credentials)
-	if err != nil {
-		return nil, err
-	}
-
-	client, err := NewClientFromProviderConfig(providerConfig, credentials, "oncall")
-	if err != nil {
-		return nil, err
-	}
-
-	c := client.(*onCallAPI.Client)
-	if c.Teams == nil {
+func NewOnCallClient(client *onCallAPI.Client) (*OnCallClient, error) {
+	if client.Teams == nil {
 		return nil, errors.Errorf("client is nil")
 	}
 	return &OnCallClient{
-		Client: c,
+		Client: client,
 	}, nil
 }
 
