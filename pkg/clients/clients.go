@@ -73,7 +73,7 @@ func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret,
 	return &client, nil
 }
 
-// CreateConfiguration from the Crossplane ProviderConfig
+// createCrossplaneConfiguration from the Crossplane ProviderConfig
 //
 //nolint:gocyclo // ignore
 func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]string) map[string]any {
@@ -146,6 +146,8 @@ func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]
 	return config
 }
 
+// mostly copied from terraform-provider-grafana/pkg/provider/legacy_provider.go#configure()
+// commented out some bits that need additional logic, not required for the POC
 func createTFConfiguration(d map[string]any) (*grafanaProvider.ProviderConfig, error) {
 	cfg := grafanaProvider.ProviderConfig{
 		Auth:                       stringValueOrNull(d, "auth"),

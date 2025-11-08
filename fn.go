@@ -22,6 +22,8 @@ type Function struct {
 }
 
 // RunFunction runs the Function.
+//
+//nolint:gocyclo // ignore
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "grafana-data", req.GetMeta().GetTag())
 
