@@ -81,7 +81,12 @@ func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 	case "UserNotificationRule":
 		path := "spec.forProvider.userId"
 		return replacePath(desired, path, c.GetUsers)
+
+	case "Integration":
+		path := "spec.forProvider.defaultRoute.slack.channelId"
+		return replacePath(desired, path, c.GetSlackChannelID)
 	}
+
 	return nil
 }
 
@@ -206,4 +211,25 @@ func (c *OnCallClient) GetScheduleID(id string) string {
 	}
 
 	return response.Schedules[0].ID
+}
+
+func (c *OnCallClient) GetSlackChannelID(name string) string {
+	options := &onCallAPI.ListSlackChannelOptions{
+		ChannelName: name,
+	}
+
+	slackChannelsResponse, _, err := c.Client.SlackChannels.ListSlackChannels(options)
+	if err != nil {
+		return name
+	}
+
+	if len(slackChannelsResponse.SlackChannels) == 0 {
+		return name
+	} else if len(slackChannelsResponse.SlackChannels) != 1 {
+		return name
+	}
+
+	slackChannel := slackChannelsResponse.SlackChannels[0]
+
+	return slackChannel.SlackId
 }
