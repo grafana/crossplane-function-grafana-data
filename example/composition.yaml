@@ -72,6 +72,19 @@ spec:
         - fromFieldPath: spec.parameters.providerConfigRef
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
+      - base:
+          apiVersion: sm.grafana.crossplane.io/v1
+          kind: Check
+          spec:
+            forProvider: {}
+        name: check
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.probes
+          toFieldPath: spec.forProvider.probes
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
   - step: run-the-function
     functionRef:
       name: function-grafana-data
