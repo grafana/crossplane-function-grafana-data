@@ -116,32 +116,38 @@ func (c *OnCallClient) getAllTeams() error {
 }
 
 // GetUsers looks up users and returns the IDs
-func (c *OnCallClient) GetUsers(userIDs []string) []string {
+func (c *OnCallClient) GetUsers(userIDs []string) ([]string, error) {
 	newVal := []string{}
 	for _, id := range userIDs {
-		userID := c.GetUserID(id)
+		userID, err := c.GetUserID(id)
+		if err != nil {
+			return nil, err
+		}
 		newVal = append(newVal, userID)
 	}
-	return newVal
+	return newVal, nil
 }
 
 // GetRollingUsers looks up rolling users (a nested array)
-func (c *OnCallClient) GetRollingUsers(val [][]string) [][]string {
+func (c *OnCallClient) GetRollingUsers(val [][]string) ([][]string, error) {
 	newVal := [][]string{}
 	for _, userIDs := range val {
-		usernames := c.GetUsers(userIDs)
+		usernames, err := c.GetUsers(userIDs)
+		if err != nil {
+			return nil, err
+		}
 		newVal = append(newVal, usernames)
 	}
-	return newVal
+	return newVal, nil
 }
 
 // GetUserID looks up a user
-func (c *OnCallClient) GetUserID(id string) string {
+func (c *OnCallClient) GetUserID(id string) (string, error) {
 	// populate the list if the list is empty
 	if len(c.Users) == 0 {
 		err := c.getAllUsers()
 		if err != nil {
-			return id
+			return "", err
 		}
 	}
 
@@ -150,7 +156,7 @@ func (c *OnCallClient) GetUserID(id string) string {
 		return c.ID == id
 	})
 	if idx != -1 {
-		return c.Users[idx].ID
+		return c.Users[idx].ID, nil
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
@@ -159,20 +165,18 @@ func (c *OnCallClient) GetUserID(id string) string {
 	})
 
 	if usernameEmailIDx != -1 {
-		return c.Users[usernameEmailIDx].ID
+		return c.Users[usernameEmailIDx].ID, nil
 	}
 
-	// ID, username or email not found, return as is
-	// TODO: consider failing here
-	return id
+	return "", errors.Errorf("Could not find user with name %s", id)
 }
 
 // GetTeamID looks up a team
-func (c *OnCallClient) GetTeamID(id string) string {
+func (c *OnCallClient) GetTeamID(id string) (string, error) {
 	if len(c.Teams) == 0 {
 		err := c.getAllTeams()
 		if err != nil {
-			return id
+			return "", err
 		}
 	}
 
@@ -181,7 +185,7 @@ func (c *OnCallClient) GetTeamID(id string) string {
 		return c.ID == id
 	})
 	if idx != -1 {
-		return c.Users[idx].ID
+		return c.Users[idx].ID, nil
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
@@ -190,46 +194,42 @@ func (c *OnCallClient) GetTeamID(id string) string {
 	})
 
 	if teamEmailIDx != -1 {
-		return c.Teams[teamEmailIDx].ID
+		return c.Teams[teamEmailIDx].ID, nil
 	}
 
-	// ID, name or email not found, return as is
-	// TODO: consider failing here
-	return id
+	return "", errors.Errorf("Could not find team with ID %s", id)
 }
 
 // GetScheduleID looks up a schedule
-func (c *OnCallClient) GetScheduleID(id string) string {
+func (c *OnCallClient) GetScheduleID(id string) (string, error) {
 	options := &onCallAPI.ListScheduleOptions{
 		Name: id,
 	}
 	response, _, err := c.Client.Schedules.ListSchedules(options)
 	if err != nil {
-		return id
-		// TODO: figure out how to handle errors
-		// return errors.Wrapf(err, "Failed to list oncall schedules")
+		return "", errors.Wrapf(err, "Failed to list oncall schedules")
 	}
 
-	return response.Schedules[0].ID
+	return response.Schedules[0].ID, nil
 }
 
-func (c *OnCallClient) GetSlackChannelID(name string) string {
+func (c *OnCallClient) GetSlackChannelID(name string) (string, error) {
 	options := &onCallAPI.ListSlackChannelOptions{
 		ChannelName: name,
 	}
 
 	slackChannelsResponse, _, err := c.Client.SlackChannels.ListSlackChannels(options)
 	if err != nil {
-		return name
+		return "", err
 	}
 
 	if len(slackChannelsResponse.SlackChannels) == 0 {
-		return name
+		return name, nil
 	} else if len(slackChannelsResponse.SlackChannels) != 1 {
-		return name
+		return name, nil
 	}
 
 	slackChannel := slackChannelsResponse.SlackChannels[0]
 
-	return slackChannel.SlackId
+	return slackChannel.SlackId, nil
 }
