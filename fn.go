@@ -74,9 +74,11 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				return rsp, nil
 			}
 
-		// dummy to stop linter complaining
-		case "xxx.grafana.crossplane.io":
-			continue
+		case "sm.grafana.crossplane.io":
+			if err := NewSMClient(clientMap[providerConfigName].SMAPI).Process(desired); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
 		}
 	}
 
