@@ -1,18 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"slices"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	v1 "k8s.io/api/core/v1"
 
 	"github.com/crossplane/function-sdk-go/errors"
+	"github.com/crossplane/function-sdk-go/resource"
 )
-
-// OnCallClients is a map of OnCallClient structs
-type OnCallClients map[string]*OnCallClient
 
 // OnCallClient is a client with convenience methods
 type OnCallClient struct {
@@ -22,27 +17,10 @@ type OnCallClient struct {
 }
 
 // NewOnCallClient returns a client with convenience methods
-func NewOnCallClient(providerConfig *v1beta1.ProviderConfig, secret *v1.Secret) (*OnCallClient, error) {
-	var credentials map[string]string
-	err := json.Unmarshal(secret.Data["instanceCredentials"], &credentials)
-	if err != nil {
-		return nil, err
-	}
-
-	if providerConfig.Spec.OnCallURL != "" {
-		credentials["oncall_url"] = providerConfig.Spec.OnCallURL
-	}
-
-	if providerConfig.Spec.URL != "" {
-		credentials["url"] = providerConfig.Spec.URL
-	}
-	client, err := onCallAPI.NewWithGrafanaURL(credentials["oncall_url"], credentials["auth"], credentials["url"])
-	if err != nil {
-		return nil, err
-	}
+func NewOnCallClient(client *onCallAPI.Client) *OnCallClient {
 	return &OnCallClient{
 		Client: client,
-	}, nil
+	}
 }
 
 func (c *OnCallClient) getAllUsers() error {
@@ -67,6 +45,48 @@ func (c *OnCallClient) getAllUsers() error {
 		page++
 	}
 	c.Users = allUsers
+	return nil
+}
+
+func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
+	gvk := desired.Resource.GroupVersionKind()
+	switch gvk.Kind {
+	case "Escalation":
+		path := "spec.forProvider.notifyOnCallFromSchedule"
+		if err := replacePath(desired, path, c.GetScheduleID); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.personsToNotify"
+		if err := replacePath(desired, path, c.GetUsers); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.personsToNotifyNextEachTime"
+		return replacePath(desired, path, c.GetUsers)
+
+	case "OnCallShift":
+		path := "spec.forProvider.users"
+		if err := replacePath(desired, path, c.GetUsers); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.rollingUsers"
+		return replacePath(desired, path, c.GetRollingUsers)
+
+	case "Schedule":
+		path := "spec.forProvider.teamId"
+		return replacePath(desired, path, c.GetTeamID)
+
+	case "UserNotificationRule":
+		path := "spec.forProvider.userId"
+		return replacePath(desired, path, c.GetUsers)
+
+	case "Integration":
+		path := "spec.forProvider.defaultRoute.slack.channelId"
+		return replacePath(desired, path, c.GetSlackChannelID)
+	}
+
 	return nil
 }
 
@@ -191,4 +211,25 @@ func (c *OnCallClient) GetScheduleID(id string) string {
 	}
 
 	return response.Schedules[0].ID
+}
+
+func (c *OnCallClient) GetSlackChannelID(name string) string {
+	options := &onCallAPI.ListSlackChannelOptions{
+		ChannelName: name,
+	}
+
+	slackChannelsResponse, _, err := c.Client.SlackChannels.ListSlackChannels(options)
+	if err != nil {
+		return name
+	}
+
+	if len(slackChannelsResponse.SlackChannels) == 0 {
+		return name
+	} else if len(slackChannelsResponse.SlackChannels) != 1 {
+		return name
+	}
+
+	slackChannel := slackChannelsResponse.SlackChannels[0]
+
+	return slackChannel.SlackId
 }

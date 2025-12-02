@@ -16,6 +16,19 @@ spec:
       resources:
       - base:
           apiVersion: oncall.grafana.crossplane.io/v1
+          kind: Integration
+          spec:
+            forProvider: {}
+        name: integration
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.defaultRoute.slack.channelId
+          toFieldPath: spec.forProvider.defaultRoute.slack.channelId
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
+      - base:
+          apiVersion: oncall.grafana.crossplane.io/v1
           kind: OnCallShift
           spec:
             forProvider: {}

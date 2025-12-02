@@ -2,11 +2,8 @@ package main
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
-	v1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
 	"github.com/crossplane/function-sdk-go/errors"
@@ -22,15 +19,15 @@ type Function struct {
 	fnv1.FunctionRunnerServiceServer
 
 	log logging.Logger
-
-	OnCallClients OnCallClients
 }
 
 // RunFunction runs the Function.
+//
+//nolint:gocyclo // ignore
 func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) (*fnv1.RunFunctionResponse, error) {
 	f.log.Info("Running function", "grafana-data", req.GetMeta().GetTag())
 
-	f.OnCallClients = make(OnCallClients)
+	clientMap := make(map[string]*clients.Client)
 
 	rsp := response.To(req, response.DefaultTTL)
 
@@ -44,17 +41,37 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	for _, desired := range desiredComposed {
 		gvk := desired.Resource.GroupVersionKind()
 
-		switch gvk.Group {
-		case "oncall.grafana.crossplane.io":
-			_, err := f.processOncallResource(desired, rsp, req)
+		var providerConfigName string
+		if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
+			// return if no value found at path
+			response.Fatal(rsp, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired))
+			return rsp, nil
+		}
+
+		if _, ok := clientMap[providerConfigName]; !ok {
+			cf := clientsFetcher{
+				req:                req,
+				rsp:                rsp,
+				providerConfigName: providerConfigName,
+			}
+			cs, err := cf.getClients()
 			if err != nil {
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
-			// Uncomment this when there are more than one groups cases
-			// if cont {
-			// 	continue
-			// }
+			if cs == nil {
+				// grabbing the providerConfig and secret for setting up the clients might need a few roundtrips
+				continue
+			}
+			clientMap[providerConfigName] = cs
+		}
+
+		switch gvk.Group {
+		case "oncall.grafana.crossplane.io":
+			if err := NewOnCallClient(clientMap[providerConfigName].OnCallClient).Process(desired); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
 
 		// dummy to stop linter complaining
 		case "xxx.grafana.crossplane.io":
@@ -72,66 +89,6 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
-//nolint:gocyclo // TODO: move providerConfig code into separate method
-func (f *Function) processOncallResource(desired *resource.DesiredComposed, rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest) (bool, error) {
-	var providerConfigName string
-	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto("spec.providerConfigRef.name", &providerConfigName); err != nil {
-		// return if no value found at path
-		return false, errors.Wrapf(err, "cannot find providerConfig for resource %T", desired)
-	}
-
-	client, ok := f.OnCallClients[providerConfigName]
-	if !ok {
-		providerConfig, secret, err := getProviderConfig(rsp, req, providerConfigName)
-		if err != nil {
-			return false, errors.Wrap(err, "Could not get providerConfig or secret")
-		}
-		if providerConfig == nil || secret == nil {
-			return true, nil
-		}
-		client, err = NewOnCallClient(providerConfig, secret)
-		if err != nil {
-			return false, errors.Wrap(err, "Could not create OnCall client")
-		}
-		f.OnCallClients[providerConfigName] = client
-	}
-
-	gvk := desired.Resource.GroupVersionKind()
-	switch gvk.Kind {
-	case "Escalation":
-		path := "spec.forProvider.notifyOnCallFromSchedule"
-		if err := replacePath(desired, path, client.GetScheduleID); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.personsToNotify"
-		if err := replacePath(desired, path, client.GetUsers); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.personsToNotifyNextEachTime"
-		return false, replacePath(desired, path, client.GetUsers)
-
-	case "OnCallShift":
-		path := "spec.forProvider.users"
-		if err := replacePath(desired, path, client.GetUsers); err != nil {
-			return false, err
-		}
-
-		path = "spec.forProvider.rollingUsers"
-		return false, replacePath(desired, path, client.GetRollingUsers)
-
-	case "Schedule":
-		path := "spec.forProvider.teamId"
-		return false, replacePath(desired, path, client.GetTeamID)
-
-	case "UserNotificationRule":
-		path := "spec.forProvider.userId"
-		return false, replacePath(desired, path, client.GetUsers)
-	}
-	return false, nil
-}
-
 func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(V) V) error {
 	var val V
 	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto(path, &val); err != nil {
@@ -147,67 +104,4 @@ func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(
 	}
 
 	return nil
-}
-
-func getProviderConfig(rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest, providerConfigName string) (*v1beta1.ProviderConfig, *v1.Secret, error) {
-	providerConfig, err := getRequiredResource[v1beta1.ProviderConfig](rsp, req,
-		&fnv1.ResourceSelector{
-			ApiVersion: "grafana.crossplane.io/v1beta1",
-			Kind:       "ProviderConfig",
-			Match: &fnv1.ResourceSelector_MatchName{
-				MatchName: providerConfigName,
-			},
-		},
-	)
-
-	if providerConfig == nil || err != nil {
-		return nil, nil, err
-	}
-
-	secret, err := getRequiredResource[v1.Secret](rsp, req,
-		&fnv1.ResourceSelector{
-			ApiVersion: "v1",
-			Kind:       "Secret",
-			Namespace:  &providerConfig.Spec.Credentials.SecretRef.Namespace,
-			Match: &fnv1.ResourceSelector_MatchName{
-				MatchName: providerConfig.Spec.Credentials.SecretRef.Name,
-			},
-		},
-	)
-	if secret == nil || err != nil {
-		return nil, nil, err
-	}
-	return providerConfig, secret, nil
-}
-
-func getRequiredResource[R any](rsp *fnv1.RunFunctionResponse, req *fnv1.RunFunctionRequest, selector *fnv1.ResourceSelector) (*R, error) {
-	key := fmt.Sprintf("%s/%s", selector.GetKind(), selector.GetMatchName())
-
-	if rsp.GetRequirements() == nil {
-		rsp.Requirements = &fnv1.Requirements{}
-	}
-	if rsp.GetRequirements().GetResources() == nil {
-		rsp.Requirements.Resources = make(map[string]*fnv1.ResourceSelector)
-	}
-	rsp.Requirements.Resources[key] = selector
-
-	requiredResources, err := request.GetRequiredResources(req)
-	if err != nil {
-		return nil, errors.Wrapf(err, "cannot get requiredResources resources with secret")
-	}
-	rr, ok := requiredResources[key]
-	if !ok {
-		return nil, nil
-	}
-
-	if len(rr) > 1 {
-		return nil, errors.Errorf("Too many resources returned")
-	}
-
-	var rs R
-	if err = runtime.DefaultUnstructuredConverter.
-		FromUnstructured(rr[0].Resource.Object, &rs); err != nil {
-		return nil, errors.Wrapf(err, "cannot convert Secret")
-	}
-	return &rs, nil
 }
