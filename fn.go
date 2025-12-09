@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 
@@ -73,9 +74,11 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				return rsp, nil
 			}
 
-		// dummy to stop linter complaining
-		case "xxx.grafana.crossplane.io":
-			continue
+		case "sm.grafana.crossplane.io":
+			if err := NewSMClient(clientMap[providerConfigName].SMAPI).Process(desired); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
 		}
 	}
 
@@ -89,14 +92,18 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
-func replacePath[V any](desired *resource.DesiredComposed, path string, fn func(V) V) error {
+func replacePath[V, W any](desired *resource.DesiredComposed, path string, fn func(V) (W, error)) error {
 	var val V
 	if err := fieldpath.Pave(desired.Resource.Object).GetValueInto(path, &val); err != nil {
 		//nolint:nilerr // simply return if no value found at path
 		return nil
 	}
 
-	newVal := fn(val)
+	newVal, err := fn(val)
+	if err != nil {
+		// TODO: replace with proper response function
+		fmt.Println(err)
+	}
 
 	if err := desired.Resource.SetValue(path, newVal); err != nil {
 		gvk := desired.Resource.GroupVersionKind()
