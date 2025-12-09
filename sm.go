@@ -42,8 +42,9 @@ func (c *SMClient) getProbes() error {
 
 func (c *SMClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
-	switch gvk.Kind {
-	case "Check":
+	// switch gvk.Kind {
+	// case "Check":
+	if gvk.Kind == "Check" {
 		path := "spec.forProvider.probes"
 		return replacePath(desired, path, c.GetProbes)
 	}
