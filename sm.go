@@ -4,11 +4,11 @@ import (
 	"context"
 	"slices"
 
-	"github.com/crossplane/function-sdk-go/errors"
-	"github.com/crossplane/function-sdk-go/resource"
-
 	"github.com/grafana/synthetic-monitoring-agent/pkg/pb/synthetic_monitoring"
 	SMAPI "github.com/grafana/synthetic-monitoring-api-go-client"
+
+	"github.com/crossplane/function-sdk-go/errors"
+	"github.com/crossplane/function-sdk-go/resource"
 )
 
 // OnCallClient is a client with convenience methods
