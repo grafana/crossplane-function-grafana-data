@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "crossplane": {
+    "managerFilePatterns": [
+      "/(^|/)example/.*\\.ya?ml$/"
+    ]
+  },
+  "packageRules": [
+    {
+      "matchManagers": [
+        "crossplane"
+      ],
+      "matchFileNames": [
+        "example/**"
+      ],
+      "groupName": "examples"
+    }
+  ],
+  "postUpdateOptions": [
+    "gomodTidy",
+    "gomodUpdateImportPaths"
+  ],
+  "ignoreDeps": [
+    // These should get updated along with crossplane-provider-grafana
+    "github.com/grafana/amixr-api-go-client",
+    "github.com/grafana/grafana-app-sdk",
+    "github.com/grafana/grafana-asserts-public-clients/go/gcom",
+    "github.com/grafana/grafana-com-public-clients/go/gcom",
+    "github.com/grafana/grafana-openapi-client-go",
+    "github.com/grafana/k6-cloud-openapi-client-go",
+    "github.com/grafana/machine-learning-go-client",
+    "github.com/grafana/slo-openapi-client/go/slo",
+    "github.com/grafana/synthetic-monitoring-agent",
+    "github.com/grafana/synthetic-monitoring-api-go-client",
+    "github.com/grafana/terraform-provider-grafana/v4",
+    "github.com/hashicorp/terraform-plugin-framework",
+  ],
+}
