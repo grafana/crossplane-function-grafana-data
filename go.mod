@@ -10,7 +10,7 @@ require (
 	github.com/grafana/amixr-api-go-client v0.0.26
 	github.com/grafana/crossplane-provider-grafana v0.40.0
 	github.com/grafana/grafana-app-sdk v0.45.0
-	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20250916172812-b0f2b75c0d34
+	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20251124105105-055c57cf1154
 	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20250526074454-7ec66e02e4bb
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20250617151817-c0f8cbb88d5c
 	github.com/grafana/k6-cloud-openapi-client-go v0.0.0-20251022100644-dd6cfbb68f85
