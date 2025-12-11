@@ -48,6 +48,7 @@ func (c *OnCallClient) getAllUsers() error {
 	return nil
 }
 
+// Process processes fields of different kinds
 func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
 	switch gvk.Kind {
@@ -213,6 +214,7 @@ func (c *OnCallClient) GetScheduleID(id string) (string, error) {
 	return response.Schedules[0].ID, nil
 }
 
+// GetSlackChannelID looks up a slack channel ID
 func (c *OnCallClient) GetSlackChannelID(name string) (string, error) {
 	options := &onCallAPI.ListSlackChannelOptions{
 		ChannelName: name,

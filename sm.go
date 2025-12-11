@@ -40,6 +40,7 @@ func (c *SMClient) getProbes() error {
 	return nil
 }
 
+// Process processes fields of different kinds
 func (c *SMClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
 	// switch gvk.Kind {
@@ -51,6 +52,7 @@ func (c *SMClient) Process(desired *resource.DesiredComposed) error {
 	return nil
 }
 
+// GetProbes looks up probe IDs for given names
 func (c *SMClient) GetProbes(probes []any) ([]int64, error) {
 	probeIDs := []int64{}
 	for _, probe := range probes {
@@ -63,6 +65,7 @@ func (c *SMClient) GetProbes(probes []any) ([]int64, error) {
 	return probeIDs, nil
 }
 
+// GetProbeID looks up a probe ID for given name
 func (c *SMClient) GetProbeID(probe any) (int64, error) {
 	if err := c.getProbes(); err != nil {
 		return -1, err
