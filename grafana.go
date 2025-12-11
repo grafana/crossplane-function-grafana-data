@@ -39,7 +39,7 @@ func (c *GrafanaClient) Process(desired *resource.DesiredComposed) error {
 
 // GetTeamIDForFolderPermissions will replace TeamID fields with team names to their ID equivalent
 func (c *GrafanaClient) GetTeamIDForFolderPermissions(permissions []v1alpha1.FolderPermissionPermissionsParameters) ([]v1alpha1.FolderPermissionPermissionsParameters, error) {
-	newPermissions := make([]v1alpha1.=arameters, 0)
+	newPermissions := make([]v1alpha1.FolderPermissionPermissionsParameters, 0)
 	for _, p := range permissions {
 		if p.TeamID != nil {
 			teamID, err := c.GetTeam(*p.TeamID)
