@@ -13,18 +13,19 @@ import (
 	"github.com/crossplane/function-sdk-go/resource"
 )
 
-// OnCallClient is a client with convenience methods
+// GrafanaClient is a client with convenience methods
 type GrafanaClient struct {
 	Client *client.GrafanaHTTPAPI
 }
 
-// NewOnCallClient returns a client with convenience methods
+// NewGrafanaClient returns a client with convenience methods
 func NewGrafanaClient(client *client.GrafanaHTTPAPI) *GrafanaClient {
 	return &GrafanaClient{
 		Client: client,
 	}
 }
 
+// Process processes fields of different kinds
 func (c *GrafanaClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
 	// switch gvk.Kind {
@@ -36,8 +37,9 @@ func (c *GrafanaClient) Process(desired *resource.DesiredComposed) error {
 	return nil
 }
 
+// GetTeamIDForFolderPermissions will replace TeamID fields with team names to their ID equivalent
 func (c *GrafanaClient) GetTeamIDForFolderPermissions(permissions []v1alpha1.FolderPermissionPermissionsParameters) ([]v1alpha1.FolderPermissionPermissionsParameters, error) {
-	newPermissions := make([]v1alpha1.FolderPermissionPermissionsParameters, 0)
+	newPermissions := make([]v1alpha1.=arameters, 0)
 	for _, p := range permissions {
 		if p.TeamID != nil {
 			teamID, err := c.GetTeam(*p.TeamID)
@@ -52,6 +54,7 @@ func (c *GrafanaClient) GetTeamIDForFolderPermissions(permissions []v1alpha1.Fol
 	return newPermissions, nil
 }
 
+// GetTeam will return the ID for a team name
 func (c *GrafanaClient) GetTeam(name string) (string, error) {
 	_, err := c.Client.Teams.GetTeamByID(name)
 	if err == nil {
