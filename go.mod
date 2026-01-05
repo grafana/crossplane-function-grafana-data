@@ -21,7 +21,7 @@ require (
 	github.com/grafana/synthetic-monitoring-api-go-client v0.17.1
 	github.com/grafana/terraform-provider-grafana/v4 v4.12.0
 	github.com/hashicorp/terraform-plugin-framework v1.14.1
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/protobuf v1.36.11
 	k8s.io/api v0.34.2
 	k8s.io/apimachinery v0.34.3
 	sigs.k8s.io/controller-tools v0.19.0
