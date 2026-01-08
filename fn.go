@@ -32,6 +32,15 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 	rsp := response.To(req, response.DefaultTTL)
 
+	compositeResource, err := request.GetObservedCompositeResource(req)
+	if err != nil {
+		response.Fatal(rsp, errors.Wrapf(err, "cannot get composite resource from %T", req))
+		return rsp, nil
+	}
+
+	gvk := compositeResource.Resource.GroupVersionKind()
+	f.log.Info("Processing composite resource", "group", gvk.Group, "version", gvk.Version, "kind", gvk.Kind, "name", compositeResource.Resource.GetName())
+
 	// The composed resources desired by any previous Functions in the pipeline.
 	desiredComposed, err := request.GetDesiredComposedResources(req)
 	if err != nil {

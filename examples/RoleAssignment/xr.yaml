@@ -1,0 +1,17 @@
+---
+apiVersion: example.crossplane.io/v1
+kind: XFnTest
+metadata:
+  name: example-xr
+spec:
+  parameters:
+    providerConfigRef:
+      name: stub
+    forProvider:
+      roleUid: "my_role"
+      teamId: "someTeam"
+      userId: "joe@example.com"
+      serviceAccountId: "thisSA"
+      teams: ["someTeam"]
+      users: ["joe@example.com"]
+      serviceAccounts: ["thisSA"]

@@ -2,7 +2,7 @@
 apiVersion: grafana.crossplane.io/v1beta1
 kind: ProviderConfig
 metadata:
-  name: pvConf
+  name: stub
 spec:
   credentials:
     secretRef:
@@ -13,3 +13,12 @@ spec:
   oncallUrl: https://oncall-ops-eu-south-0.grafana-ops.net/oncall/
   smUrl: https://synthetic-monitoring-api-eu-south-0.grafana-ops.net
   url: https://ops.grafana-ops.net
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: grafana-instance
+  namespace: crossplane
+type: Opaque
+data:
+  instanceCredentials: <redacted>
