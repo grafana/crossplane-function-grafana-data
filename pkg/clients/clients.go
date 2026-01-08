@@ -3,6 +3,7 @@ package clients
 
 import (
 	"encoding/json"
+	"strconv"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
@@ -17,6 +18,8 @@ import (
 	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // Client struct with all known clients (~copy/paste from TF provider)
@@ -40,14 +43,16 @@ type Client struct {
 
 // NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/secret
 func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret, secretKey string) (*Client, error) {
-	var credentials map[string]string
+	var credentials map[string]any
 	err := json.Unmarshal(secret.Data[secretKey], &credentials)
 	if err != nil {
 		return nil, err
 	}
 
-	crcfg := createCrossplaneConfiguration(pc, credentials)
-
+	crcfg, err := createCrossplaneConfiguration(pc, credentials)
+	if err != nil {
+		return nil, err
+	}
 	cfg, err := createTFConfiguration(crcfg)
 	if err != nil {
 		return nil, err
@@ -76,7 +81,7 @@ func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret,
 // createCrossplaneConfiguration from the Crossplane ProviderConfig
 //
 //nolint:gocyclo // ignore
-func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]string) map[string]any {
+func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]any) (map[string]any, error) {
 	// Set credentials in Terraform provider configuration.
 	// https://registry.terraform.io/providers/grafana/grafana/latest/docs
 	config := map[string]any{}
@@ -112,7 +117,15 @@ func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]
 		"k6_access_token",
 	} {
 		if v, ok := creds[k]; ok {
-			config[k] = v
+			if k == "org_id" || k == "stack_id" {
+				newV, err := convertToInt(v)
+				if err != nil {
+					return nil, err
+				}
+				config[k] = newV
+			} else {
+				config[k] = v
+			}
 		}
 	}
 
@@ -143,7 +156,18 @@ func createCrossplaneConfiguration(pc *v1beta1.ProviderConfig, creds map[string]
 	if pc.Spec.StackID != nil {
 		config["stack_id"] = *pc.Spec.StackID
 	}
-	return config
+	return config, nil
+}
+
+func convertToInt(a any) (int, error) {
+	switch t := a.(type) {
+	case string:
+		return strconv.Atoi(a.(string))
+	case int:
+		return a.(int), nil
+	default:
+		return 0, errors.Errorf("could not convert %T to int", t)
+	}
 }
 
 // mostly copied from terraform-provider-grafana/pkg/provider/legacy_provider.go#configure()
