@@ -12,6 +12,6 @@ spec:
       teamId: "someTeam"
       userId: "joe@example.com"
       serviceAccountId: "thisSA"
-      teamId: ["someTeam"]
-      userId: ["joe@example.com"]
-      serviceAccountId: ["thisSA"]
+      teams: ["someTeam"]
+      users: ["joe@example.com"]
+      serviceAccounts: ["thisSA"]
