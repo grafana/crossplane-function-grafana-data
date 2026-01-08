@@ -200,6 +200,7 @@ func (c *GrafanaClient) GetServiceAccount(name string) (string, error) {
 				return fmt.Sprintf("%d", sa.ID), nil
 			}
 		}
+		page++
 	}
 	return name, errors.Errorf("Could not find ID for service account: %s", name)
 }
