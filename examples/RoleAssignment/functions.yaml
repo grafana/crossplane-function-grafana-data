@@ -13,10 +13,6 @@ spec:
 apiVersion: pkg.crossplane.io/v1
 kind: Function
 metadata:
-  annotations:
-    tanka.dev/namespaced: "false"
-  labels:
-    tanka.dev/environment: c4fa5391064f7af58da64e869c7402a222444334ff5f7a75
   name: function-patch-and-transform
 spec:
   package: xpkg.upbound.io/crossplane-contrib/function-patch-and-transform:v0.9.1@sha256:9d337903fd62a03dbdb9edfbc2c7f2029554ef81834fd520efd6080575c0b1cc

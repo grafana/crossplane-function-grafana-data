@@ -1,0 +1,63 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-grafana-data
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XFnTest
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - base:
+          apiVersion: oss.grafana.crossplane.io/v1alpha1
+          kind: RoleAssignment
+          spec:
+            forProvider: {}
+        name: roleAssignment
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.roleUid
+          toFieldPath: spec.forProvider.roleUid
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.teams
+          toFieldPath: spec.forProvider.teams
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.users
+          toFieldPath: spec.forProvider.users
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.serviceAccounts
+          toFieldPath: spec.forProvider.serviceAccounts
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
+      - base:
+          apiVersion: oss.grafana.crossplane.io/v1alpha1
+          kind: RoleAssignmentItem
+          spec:
+            forProvider: {}
+        name: roleAssignmentItem
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.roleUid
+          toFieldPath: spec.forProvider.roleUid
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.teamId
+          toFieldPath: spec.forProvider.teamId
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.userId
+          toFieldPath: spec.forProvider.userId
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.serviceAccountId
+          toFieldPath: spec.forProvider.serviceAccountId
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
+  - step: run-the-function
+    functionRef:
+      name: function-grafana-data
