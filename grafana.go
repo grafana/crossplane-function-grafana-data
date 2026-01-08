@@ -37,6 +37,28 @@ func (c *GrafanaClient) Process(desired *resource.DesiredComposed) error {
 		path := "spec.forProvider.permissions"
 		return replacePath(desired, path, c.GetTeamIDForFolderPermissions)
 
+	case "RoleAssignment":
+		path := "spec.forProvider.roleUid"
+		err := replacePath(desired, path, c.GetRoleUID)
+		if err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.serviceAccounts"
+		err = replacePath(desired, path, c.GetServiceAccounts)
+		if err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.users"
+		err = replacePath(desired, path, c.GetUsers)
+		if err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.teams"
+		return replacePath(desired, path, c.GetTeams)
+
 	case "RoleAssignmentItem":
 		path := "spec.forProvider.roleUid"
 		err := replacePath(desired, path, c.GetRoleUID)
