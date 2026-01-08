@@ -3,10 +3,8 @@ package clients
 
 import (
 	"encoding/json"
-	"fmt"
 	"strconv"
 
-	"github.com/crossplane/function-sdk-go/errors"
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
 	"github.com/grafana/grafana-app-sdk/k8s"
@@ -20,6 +18,8 @@ import (
 	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	v1 "k8s.io/api/core/v1"
+
+	"github.com/crossplane/function-sdk-go/errors"
 )
 
 // Client struct with all known clients (~copy/paste from TF provider)
@@ -166,7 +166,7 @@ func convertToInt(a any) (int, error) {
 	case int:
 		return a.(int), nil
 	default:
-		return 0, errors.Errorf("Could not convert %T to int\n", t)
+		return 0, errors.Errorf("could not convert %T to int", t)
 	}
 }
 
