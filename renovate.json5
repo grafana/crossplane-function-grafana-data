@@ -17,7 +17,14 @@
         "example/**"
       ],
       "groupName": "examples"
-    }
+    },
+    {
+      matchPackageNames: [
+        'go',
+        'golang',
+      ],
+      groupName: 'go'
+    },
   ],
   "postUpdateOptions": [
     "gomodTidy",
