@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
@@ -21,15 +22,15 @@ type clientsFetcher struct {
 }
 
 func (cf *clientsFetcher) getClients() (*clients.Client, error) {
-	providerConfig, secret, err := cf.getProviderConfig()
+	providerConfig, credentials, err := cf.getProviderConfig()
 	if err != nil {
 		return nil, errors.Wrap(err, "Could not get providerConfig or secret")
 	}
-	if providerConfig == nil || secret == nil {
+	if providerConfig == nil || credentials == nil {
 		return nil, nil
 	}
 
-	cs, err := clients.NewClientsFromProviderConfig(providerConfig, secret, "instanceCredentials")
+	cs, err := clients.NewClientsFromProviderConfig(providerConfig, credentials)
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +38,7 @@ func (cf *clientsFetcher) getClients() (*clients.Client, error) {
 	return cs, nil
 }
 
-func (cf *clientsFetcher) getProviderConfig() (*v1beta1.ProviderConfig, *v1.Secret, error) {
+func (cf *clientsFetcher) getProviderConfig() (*v1beta1.ProviderConfig, map[string]any, error) {
 	providerConfig, err := cf.getRequiredResource(
 		&fnv1.ResourceSelector{
 			ApiVersion: "grafana.crossplane.io/v1beta1",
@@ -73,7 +74,13 @@ func (cf *clientsFetcher) getProviderConfig() (*v1beta1.ProviderConfig, *v1.Secr
 		return nil, nil, err
 	}
 
-	return pc, sc, nil
+	var credentials map[string]any
+	err = json.Unmarshal(sc.Data[pc.Spec.Credentials.SecretRef.Key], &credentials)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "could not unmarshal credentials")
+	}
+
+	return pc, credentials, nil
 }
 
 func (cf *clientsFetcher) getRequiredResource(selector *fnv1.ResourceSelector) (*resource.Required, error) {
@@ -98,6 +105,10 @@ func (cf *clientsFetcher) getRequiredResource(selector *fnv1.ResourceSelector) (
 
 	if len(rr) > 1 {
 		return nil, errors.Errorf("Too many resources returned")
+	}
+
+	if len(rr) == 0 {
+		return nil, errors.Errorf("No resources returned for selector: %q", selector)
 	}
 
 	return &rr[0], nil

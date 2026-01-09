@@ -66,7 +66,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 			}
 			cs, err := cf.getClients()
 			if err != nil {
-				response.Fatal(rsp, err)
+				response.Fatal(rsp, errors.Errorf("cannot fetch client: %q", err))
 				return rsp, nil
 			}
 			if cs == nil {
