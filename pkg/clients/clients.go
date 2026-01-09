@@ -2,7 +2,6 @@
 package clients
 
 import (
-	"encoding/json"
 	"strconv"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
@@ -17,7 +16,6 @@ import (
 	SMAPI "github.com/grafana/synthetic-monitoring-api-go-client"
 	grafanaProvider "github.com/grafana/terraform-provider-grafana/v4/pkg/provider"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	v1 "k8s.io/api/core/v1"
 
 	"github.com/crossplane/function-sdk-go/errors"
 )
@@ -41,21 +39,15 @@ type Client struct {
 	// K6APIConfig *k6providerapi.K6APIConfig
 }
 
-// NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/secret
-func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, secret *v1.Secret, secretKey string) (*Client, error) {
-	var credentials map[string]any
-	err := json.Unmarshal(secret.Data[secretKey], &credentials)
-	if err != nil {
-		return nil, err
-	}
-
+// NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/credentials
+func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, credentials map[string]any) (*Client, error) {
 	crcfg, err := createCrossplaneConfiguration(pc, credentials)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not create Crossplane configuration")
 	}
 	cfg, err := createTFConfiguration(crcfg)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "could not create TF configuration")
 	}
 
 	clients, err := grafanaProvider.CreateClients(*cfg)
