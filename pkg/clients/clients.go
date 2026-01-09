@@ -39,7 +39,7 @@ type Client struct {
 	// K6APIConfig *k6providerapi.K6APIConfig
 }
 
-// NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/secret
+// NewClientsFromProviderConfig creates a Client struct from a Crossplane ProviderConfig/credentials
 func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, credentials map[string]any) (*Client, error) {
 	crcfg, err := createCrossplaneConfiguration(pc, credentials)
 	if err != nil {
