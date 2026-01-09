@@ -177,7 +177,7 @@ jobs:
         id: version
         run: |
           VERSION="${GITHUB_REF#refs/tags/}"
-          echo "XPKG_VERSOIN=${VERSION}" >> $GITHUB_ENV
+          echo "XPKG_VERSION=${VERSION}" >> $GITHUB_ENV
 
       # If a version wasn't explicitly passed as a workflow_dispatch input we
       # default to version v0.0.0-<git-commit-date>-<git-short-sha>, for example
