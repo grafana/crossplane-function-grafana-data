@@ -14,7 +14,6 @@ on:
 
 env:
   # Common versions
-  GO_VERSION: '1.25.4'
   GOLANGCI_VERSION: 'v2.5.0'
   DOCKER_BUILDX_VERSION: 'v0.24.0'
 
@@ -46,7 +45,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           cache: false  # The golangci-lint action does its own caching.
 
       - name: Check go mod tidy
@@ -70,7 +69,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           cache: false
 
       - name: Run Unit Tests
@@ -119,8 +118,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           target: image
-          build-args:
-            GO_VERSION=${{ env.GO_VERSION }}
           outputs: type=docker,dest=runtime-${{ matrix.arch }}.tar
 
       - name: Setup the Crossplane CLI
