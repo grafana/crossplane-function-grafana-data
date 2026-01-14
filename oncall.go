@@ -211,6 +211,10 @@ func (c *OnCallClient) GetScheduleID(id string) (string, error) {
 		return "", errors.Wrapf(err, "Failed to list oncall schedules")
 	}
 
+	if len(response.Schedules) == 0 {
+		return "", errors.Wrapf(err, "No schedules found for name %s", id)
+	}
+
 	return response.Schedules[0].ID, nil
 }
 
