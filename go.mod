@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/runtime v0.29.2
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/amixr-api-go-client v0.0.26
-	github.com/grafana/crossplane-provider-grafana v0.40.0
+	github.com/grafana/crossplane-provider-grafana v1.1.0
 	github.com/grafana/grafana-app-sdk v0.45.0
 	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20250916172812-b0f2b75c0d34
 	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20250526074454-7ec66e02e4bb
