@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/go-openapi/runtime"
-	"github.com/grafana/crossplane-provider-grafana/apis/oss/v1alpha1"
+	"github.com/grafana/crossplane-provider-grafana/v2/apis/cluster/oss/v1alpha1"
 	"github.com/grafana/grafana-openapi-client-go/client"
 	"github.com/grafana/grafana-openapi-client-go/client/access_control"
 	"github.com/grafana/grafana-openapi-client-go/client/org"

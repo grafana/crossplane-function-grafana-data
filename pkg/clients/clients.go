@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
+	"github.com/grafana/crossplane-provider-grafana/v2/apis/cluster/v1beta1"
 	"github.com/grafana/grafana-app-sdk/k8s"
 	assertsapi "github.com/grafana/grafana-asserts-public-clients/go/gcom"
 	"github.com/grafana/grafana-com-public-clients/go/gcom"

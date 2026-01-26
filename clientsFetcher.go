@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
-	"github.com/grafana/crossplane-provider-grafana/apis/v1beta1"
+	"github.com/grafana/crossplane-provider-grafana/v2/apis/cluster/v1beta1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
