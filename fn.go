@@ -94,6 +94,12 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 				response.Fatal(rsp, err)
 				return rsp, nil
 			}
+
+		case "enterprise.grafana.crossplane.io":
+			if err := NewGrafanaClient(clientMap[providerConfigName].GrafanaAPI).Process(desired); err != nil {
+				response.Fatal(rsp, err)
+				return rsp, nil
+			}
 		}
 	}
 

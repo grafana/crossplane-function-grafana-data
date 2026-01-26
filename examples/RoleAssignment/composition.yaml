@@ -15,7 +15,7 @@ spec:
       kind: Resources
       resources:
       - base:
-          apiVersion: oss.grafana.crossplane.io/v1alpha1
+          apiVersion: enterprise.grafana.crossplane.io/v1alpha1
           kind: RoleAssignment
           spec:
             forProvider: {}
@@ -37,7 +37,7 @@ spec:
           toFieldPath: spec.providerConfigRef
           type: FromCompositeFieldPath
       - base:
-          apiVersion: oss.grafana.crossplane.io/v1alpha1
+          apiVersion: enterprise.grafana.crossplane.io/v1alpha1
           kind: RoleAssignmentItem
           spec:
             forProvider: {}
