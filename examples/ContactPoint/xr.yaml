@@ -1,0 +1,14 @@
+---
+apiVersion: example.crossplane.io/v1
+kind: XFnTest
+metadata:
+  name: example-xr
+spec:
+  parameters:
+    providerConfigRef:
+      name: stub
+    forProvider:
+      name: example-contact-point
+      oncall:
+        - url: my-oncall-integration
+          disableResolveMessage: false
