@@ -3,7 +3,7 @@ module github.com/grafana/crossplane-function-grafana-data
 go 1.25.4
 
 require (
-	github.com/alecthomas/kong v1.13.0
+	github.com/alecthomas/kong v1.14.0
 	github.com/crossplane/crossplane-runtime/v2 v2.1.0
 	github.com/crossplane/function-sdk-go v0.5.0
 	github.com/go-openapi/runtime v0.29.2
