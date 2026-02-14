@@ -28,8 +28,9 @@ func NewAlertingClient(grafanaClient *client.GrafanaHTTPAPI, oncallClient *onCal
 // Process processes fields of different kinds
 func (c *AlertingClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
-	switch gvk.Kind {
-	case "ContactPoint":
+	// switch gvk.Kind {
+	// case "ContactPoint":
+	if gvk.Kind == "ContactPoint" {
 		path := "spec.forProvider.oncall"
 		return replacePath(desired, path, c.GetOnCallURLs)
 	}
