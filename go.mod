@@ -9,9 +9,9 @@ require (
 	github.com/go-openapi/runtime v0.29.2
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/amixr-api-go-client v0.0.27
-	github.com/grafana/crossplane-provider-grafana/v2 v2.1.0
+	github.com/grafana/crossplane-provider-grafana/v2 v2.3.0
 	github.com/grafana/grafana-app-sdk v0.48.1
-	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20251113191110-a4819b8e1224
+	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20260118214857-d2d6ad8fdcf2
 	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20251216082918-50bdab3538ca
 	github.com/grafana/grafana-openapi-client-go v0.0.0-20250617151817-c0f8cbb88d5c
 	github.com/grafana/k6-cloud-openapi-client-go v0.0.0-20251022100644-dd6cfbb68f85
@@ -19,7 +19,7 @@ require (
 	github.com/grafana/slo-openapi-client/go/slo v0.0.0-20250218172929-ab9cae090da6
 	github.com/grafana/synthetic-monitoring-agent v0.43.1
 	github.com/grafana/synthetic-monitoring-api-go-client v0.17.1
-	github.com/grafana/terraform-provider-grafana/v4 v4.23.0
+	github.com/grafana/terraform-provider-grafana/v4 v4.25.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	google.golang.org/protobuf v1.36.11
 	k8s.io/api v0.35.0
@@ -91,7 +91,7 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/grafana/authlib/claims v0.0.0-20250120084028-e3328c576437 // indirect
-	github.com/grafana/fleet-management-api v1.0.0 // indirect
+	github.com/grafana/fleet-management-api v1.2.0 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.48.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.275.0 // indirect
 	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-20250925121631-89b988ca553e // indirect
@@ -113,16 +113,16 @@ require (
 	github.com/hashicorp/go-plugin v1.7.0 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/go-uuid v1.0.3 // indirect
-	github.com/hashicorp/go-version v1.7.0 // indirect
+	github.com/hashicorp/go-version v1.8.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.24.0 // indirect
 	github.com/hashicorp/logutils v1.0.0 // indirect
 	github.com/hashicorp/terraform-json v0.27.2 // indirect
 	github.com/hashicorp/terraform-plugin-framework-jsontypes v0.2.0 // indirect
 	github.com/hashicorp/terraform-plugin-framework-validators v0.17.0 // indirect
 	github.com/hashicorp/terraform-plugin-go v0.29.0 // indirect
-	github.com/hashicorp/terraform-plugin-log v0.9.0 // indirect
+	github.com/hashicorp/terraform-plugin-log v0.10.0 // indirect
 	github.com/hashicorp/terraform-plugin-mux v0.21.0 // indirect
-	github.com/hashicorp/terraform-plugin-sdk/v2 v2.37.0 // indirect
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.38.2 // indirect
 	github.com/hashicorp/terraform-registry-address v0.4.0 // indirect
 	github.com/hashicorp/terraform-svchost v0.1.1 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
@@ -133,6 +133,8 @@ require (
 	github.com/jszwedko/go-datemath v0.1.1-0.20230526204004-640a500621d6 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/knadh/koanf/maps v0.1.2 // indirect
+	github.com/knadh/koanf/v2 v2.3.0 // indirect
 	github.com/magefile/mage v1.15.0 // indirect
 	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/mattetti/filebuffer v1.0.1 // indirect
@@ -182,7 +184,7 @@ require (
 	github.com/woodsbury/decimal128 v1.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/yuin/goldmark v1.7.7 // indirect
-	github.com/zclconf/go-cty v1.16.4 // indirect
+	github.com/zclconf/go-cty v1.17.0 // indirect
 	github.com/zeebo/xxh3 v1.0.2 // indirect
 	go.mongodb.org/mongo-driver v1.17.6 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
@@ -206,10 +208,10 @@ require (
 	golang.org/x/net v0.48.0 // indirect
 	golang.org/x/oauth2 v0.32.0 // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/telemetry v0.0.0-20251203150158-8fff8a5912fc // indirect
 	golang.org/x/term v0.38.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	golang.org/x/tools v0.40.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
