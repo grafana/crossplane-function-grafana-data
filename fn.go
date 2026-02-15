@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/grafana/crossplane-function-grafana-data/pkg/clients"
 
@@ -79,26 +78,22 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		switch gvk.Group {
 		case "oncall.grafana.crossplane.io":
 			if err := NewOnCallClient(clientMap[providerConfigName].OnCallClient).Process(desired); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
+				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 
 		case "sm.grafana.crossplane.io":
 			if err := NewSMClient(clientMap[providerConfigName].SMAPI).Process(desired); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
+				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 
 		case "oss.grafana.crossplane.io":
 			if err := NewGrafanaClient(clientMap[providerConfigName].GrafanaAPI).Process(desired); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
+				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 
 		case "enterprise.grafana.crossplane.io":
 			if err := NewGrafanaClient(clientMap[providerConfigName].GrafanaAPI).Process(desired); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
+				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 
 		case "alerting.grafana.crossplane.io":
@@ -114,9 +109,28 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 		return rsp, nil
 	}
 
-	response.Normalf(rsp, "Successfully Processed")
-	response.ConditionTrue(rsp, "FunctionSuccess", "Success").TargetCompositeAndClaim()
+	// Check if any warnings or fatal results were added
+	if hasWarningsOrFatal(rsp) {
+		response.Normalf(rsp, "Processed with warnings")
+		response.ConditionFalse(rsp, "FunctionSuccess", "ProcessedWithWarnings").
+			WithMessage("Function processed successfully but encountered warnings").
+			TargetCompositeAndClaim()
+	} else {
+		response.Normalf(rsp, "Successfully Processed")
+		response.ConditionTrue(rsp, "FunctionSuccess", "Success").TargetCompositeAndClaim()
+	}
 	return rsp, nil
+}
+
+// hasWarningsOrFatal checks if the response contains any warning or fatal results
+func hasWarningsOrFatal(rsp *fnv1.RunFunctionResponse) bool {
+	for _, result := range rsp.GetResults() {
+		severity := result.GetSeverity()
+		if severity == fnv1.Severity_SEVERITY_WARNING || severity == fnv1.Severity_SEVERITY_FATAL {
+			return true
+		}
+	}
+	return false
 }
 
 func replacePath[V, W any](desired *resource.DesiredComposed, path string, fn func(V) (W, error)) error {
@@ -128,8 +142,7 @@ func replacePath[V, W any](desired *resource.DesiredComposed, path string, fn fu
 
 	newVal, err := fn(val)
 	if err != nil {
-		// TODO: replace with proper response function
-		fmt.Println(err)
+		return err
 	}
 
 	if err := desired.Resource.SetValue(path, newVal); err != nil {
