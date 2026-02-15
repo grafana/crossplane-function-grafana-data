@@ -17,7 +17,7 @@ type AlertingClient struct {
 	OnCallClient *onCallAPI.Client
 }
 
-// NewGrafanaClient returns a client with convenience methods
+// NewAlertingClient returns a client with convenience methods for Grafana and OnCall
 func NewAlertingClient(grafanaClient *client.GrafanaHTTPAPI, oncallClient *onCallAPI.Client) *AlertingClient {
 	return &AlertingClient{
 		Client:       grafanaClient,
@@ -56,6 +56,7 @@ func (c *AlertingClient) GetOnCallURLs(oncall []v1alpha1.OncallParameters) ([]v1
 	return newVal, nil
 }
 
+// GetOnCallURL looks up an OnCall integration by name and returns its URL
 func (c *AlertingClient) GetOnCallURL(name string) (string, error) {
 	page := 1
 	for {
