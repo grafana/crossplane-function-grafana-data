@@ -1,0 +1,35 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: function-grafana-data
+spec:
+  compositeTypeRef:
+    apiVersion: example.crossplane.io/v1
+    kind: XFnTest
+  mode: Pipeline
+  pipeline:
+  - functionRef:
+      name: function-patch-and-transform
+    input:
+      apiVersion: pt.fn.crossplane.io/v1beta1
+      kind: Resources
+      resources:
+      - base:
+          apiVersion: alerting.grafana.crossplane.io/v1alpha1
+          kind: ContactPoint
+          spec:
+            forProvider: {}
+        name: check
+        patches:
+        - fromFieldPath: spec.parameters.forProvider.name
+          toFieldPath: spec.forProvider.name
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.forProvider.oncall
+          toFieldPath: spec.forProvider.oncall
+          type: FromCompositeFieldPath
+        - fromFieldPath: spec.parameters.providerConfigRef
+          toFieldPath: spec.providerConfigRef
+          type: FromCompositeFieldPath
+  - step: run-the-function
+    functionRef:
+      name: function-grafana-data
