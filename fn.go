@@ -98,8 +98,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		case "alerting.grafana.crossplane.io":
 			if err := NewAlertingClient(clientMap[providerConfigName].GrafanaAPI, clientMap[providerConfigName].OnCallClient).Process(desired); err != nil {
-				response.Fatal(rsp, err)
-				return rsp, nil
+				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 		}
 	}
