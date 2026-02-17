@@ -9,6 +9,10 @@ import (
 	"github.com/crossplane/function-sdk-go/resource"
 )
 
+const (
+	pathTeamID = "spec.forProvider.teamId"
+)
+
 // OnCallClient is a client with convenience methods
 type OnCallClient struct {
 	Client *onCallAPI.Client
@@ -49,6 +53,8 @@ func (c *OnCallClient) getAllUsers() error {
 }
 
 // Process processes fields of different kinds
+//
+//nolint:gocyclo // switch statement complexity increases with resource types
 func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 	gvk := desired.Resource.GroupVersionKind()
 	switch gvk.Kind {
@@ -67,7 +73,12 @@ func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 		return replacePath(desired, path, c.GetUsers)
 
 	case "OnCallShift":
-		path := "spec.forProvider.users"
+		path := pathTeamID
+		if err := replacePath(desired, path, c.GetTeamID); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.users"
 		if err := replacePath(desired, path, c.GetUsers); err != nil {
 			return err
 		}
@@ -76,7 +87,7 @@ func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 		return replacePath(desired, path, c.GetRollingUsers)
 
 	case "Schedule":
-		path := "spec.forProvider.teamId"
+		path := pathTeamID
 		return replacePath(desired, path, c.GetTeamID)
 
 	case "UserNotificationRule":
@@ -84,8 +95,17 @@ func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 		return replacePath(desired, path, c.GetUsers)
 
 	case "Integration":
-		path := "spec.forProvider.defaultRoute.slack.channelId"
+		path := pathTeamID
+		if err := replacePath(desired, path, c.GetTeamID); err != nil {
+			return err
+		}
+
+		path = "spec.forProvider.defaultRoute.slack.channelId"
 		return replacePath(desired, path, c.GetSlackChannelID)
+
+	case "EscalationChain":
+		path := pathTeamID
+		return replacePath(desired, path, c.GetTeamID)
 	}
 
 	return nil

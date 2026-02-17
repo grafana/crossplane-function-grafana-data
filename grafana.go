@@ -78,7 +78,7 @@ func (c *GrafanaClient) Process(desired *resource.DesiredComposed) error {
 			return err
 		}
 
-		path = "spec.forProvider.teamId"
+		path = pathTeamID
 		return replacePath(desired, path, c.GetTeam)
 	}
 	return nil
