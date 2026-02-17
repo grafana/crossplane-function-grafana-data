@@ -122,11 +122,11 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 	return rsp, nil
 }
 
-// hasWarningsOrFatal checks if the response contains any warning or fatal results
+// hasWarningsOrFatal checks if the response contains any non-normal severity results
 func hasWarningsOrFatal(rsp *fnv1.RunFunctionResponse) bool {
 	for _, result := range rsp.GetResults() {
 		severity := result.GetSeverity()
-		if severity == fnv1.Severity_SEVERITY_WARNING || severity == fnv1.Severity_SEVERITY_FATAL {
+		if severity != fnv1.Severity_SEVERITY_NORMAL {
 			return true
 		}
 	}
