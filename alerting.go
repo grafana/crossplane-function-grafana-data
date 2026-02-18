@@ -41,6 +41,12 @@ func (c *AlertingClient) Process(desired *resource.DesiredComposed) error {
 func (c *AlertingClient) GetOnCallURLs(oncall []v1alpha1.OncallParameters) ([]v1alpha1.OncallParameters, error) {
 	newVal := make([]v1alpha1.OncallParameters, 0)
 	for _, params := range oncall {
+		// Skip if URL is nil
+		if params.URL == nil {
+			newVal = append(newVal, params)
+			continue
+		}
+
 		if strings.HasPrefix(*params.URL, "http://") || strings.HasPrefix(*params.URL, "https://") {
 			newVal = append(newVal, params)
 			continue
