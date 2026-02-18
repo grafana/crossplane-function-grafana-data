@@ -67,8 +67,8 @@ github.com/crossplane/crossplane-runtime/v2 v2.1.0 h1:JBMhL9T+/PfyjLAQEdZWlKLvA3
 github.com/crossplane/crossplane-runtime/v2 v2.1.0/go.mod h1:j78pmk0qlI//Ur7zHhqTr8iePHFcwJKrZnzZB+Fg4t0=
 github.com/crossplane/function-sdk-go v0.5.0 h1:wF+pOsR6jlIUHZjpSL6tbuSP0UB7s25+4AGkNytsHKk=
 github.com/crossplane/function-sdk-go v0.5.0/go.mod h1:bIvGe17dIdpZ/YULrg5xAP8MK+eS3ot5BAuQEntaeWc=
-github.com/crossplane/upjet/v2 v2.1.0 h1:ua06MsexmTSLcih3gvOTGzGNV47TAa15GqMnjp/a85E=
-github.com/crossplane/upjet/v2 v2.1.0/go.mod h1:jDCqvAFLrVEzqE+pywmQ5u18HbJK5j5Jj4cTQpqOLqY=
+github.com/crossplane/upjet/v2 v2.2.0 h1:ZWRG9weBklrA3hRG8CjxYql7ffEE5sYnIH3UsyxsSTA=
+github.com/crossplane/upjet/v2 v2.2.0/go.mod h1:jDCqvAFLrVEzqE+pywmQ5u18HbJK5j5Jj4cTQpqOLqY=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
@@ -213,8 +213,8 @@ github.com/grafana/amixr-api-go-client v0.0.27 h1:tmw7JcbX3D0N52mK60kYvAdRNFKH0a
 github.com/grafana/amixr-api-go-client v0.0.27/go.mod h1:ihgLhTVimmjASuZ06y/mQxPcYH3toAIuUVGK6flHsMU=
 github.com/grafana/authlib/claims v0.0.0-20250120084028-e3328c576437 h1:OlwbIVFcYgMjnQhpbZwRPVNrvZKTodvPMqwb8yEqVW0=
 github.com/grafana/authlib/claims v0.0.0-20250120084028-e3328c576437/go.mod h1:r+F8H6awwjNQt/KPZ2GNwjk8TvsJ7/gxzkXN26GlL/A=
-github.com/grafana/crossplane-provider-grafana/v2 v2.3.0 h1:SZbzMsN61sRGFduhcP8vAclD0c5AHxzO/nLA3XMm2G8=
-github.com/grafana/crossplane-provider-grafana/v2 v2.3.0/go.mod h1:BMtOPIIDfPiYfhofAOJm7TuqzgY/NZmvfK2Qqge/m0o=
+github.com/grafana/crossplane-provider-grafana/v2 v2.4.0 h1:a+DYAjhzTY0flzryoY+He11P/9p9WL0LcNt+q6HspZw=
+github.com/grafana/crossplane-provider-grafana/v2 v2.4.0/go.mod h1:lBikxHfArY4tlRJNx694Kv2Xf6YXphIlLmb75eTp9XA=
 github.com/grafana/fleet-management-api v1.2.0 h1:nVTXK+3iwTL0aPSNlYiVagzumJ+E8DyhlZvqhpgs9Gg=
 github.com/grafana/fleet-management-api v1.2.0/go.mod h1:6iJjhjWhHZ8iwkyuDXFVTuay57JILnE3kaOPk8Nzorw=
 github.com/grafana/grafana-app-sdk v0.48.1 h1:bKJadWH18WCpJ+Zk8AezRFXCcZgGredRv+fRS+8zkek=

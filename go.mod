@@ -9,7 +9,7 @@ require (
 	github.com/go-openapi/runtime v0.29.2
 	github.com/google/go-cmp v0.7.0
 	github.com/grafana/amixr-api-go-client v0.0.27
-	github.com/grafana/crossplane-provider-grafana/v2 v2.3.0
+	github.com/grafana/crossplane-provider-grafana/v2 v2.4.0
 	github.com/grafana/grafana-app-sdk v0.48.1
 	github.com/grafana/grafana-asserts-public-clients/go/gcom v0.0.0-20260118214857-d2d6ad8fdcf2
 	github.com/grafana/grafana-com-public-clients/go/gcom v0.0.0-20251216082918-50bdab3538ca
@@ -45,7 +45,7 @@ require (
 	github.com/chromedp/cdproto v0.0.0-20240810084448-b931b754e476 // indirect
 	github.com/cockroachdb/apd/v3 v3.2.1 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/crossplane/upjet/v2 v2.1.0 // indirect
+	github.com/crossplane/upjet/v2 v2.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/elazarl/goproxy v1.7.2 // indirect
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
