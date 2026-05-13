@@ -2,7 +2,7 @@
 
 # We use the latest Go 1.x version unless asked to use something else.
 # The GitHub Actions CI job sets this argument for a consistent Go version.
-ARG GO_VERSION=1.26.0@sha256:c83e68f3ebb6943a2904fa66348867d108119890a2c6a2e6f07b38d0eb6c25c5
+ARG GO_VERSION=1.26.2@sha256:b54cbf583d390341599d7bcbc062425c081105cc5ef6d170ced98ef9d047c716
 
 # Setup the base environment. The BUILDPLATFORM is set automatically by Docker.
 # The --platform=${BUILDPLATFORM} flag tells Docker to build the function using
