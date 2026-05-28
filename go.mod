@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/alecthomas/kong v1.15.0
-	github.com/crossplane/crossplane-runtime/v2 v2.2.0
+	github.com/crossplane/crossplane-runtime/v2 v2.3.1
 	github.com/crossplane/function-sdk-go v0.5.0
 	github.com/go-openapi/runtime v0.29.2
 	github.com/google/go-cmp v0.7.0
