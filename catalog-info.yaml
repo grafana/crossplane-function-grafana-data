@@ -1,0 +1,18 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: crossplane-function-grafana-data
+  title: crossplane-function-grafana-data
+  description: Grafana Labs' Crossplane composition function for Grafana data
+  tags:
+    - gitops
+  links:
+    - title: "Internal Slack Channel #crossplane"
+      type: slack
+      url: https://grafanalabs.enterprise.slack.com/archives/C03A2L4R9U1
+  annotations:
+    github.com/project-slug: grafana/crossplane-function-grafana-data
+spec:
+  type: tool
+  owner: group:default/platform-monitoring
+  lifecycle: experimental
