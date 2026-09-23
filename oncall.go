@@ -206,7 +206,7 @@ func (c *OnCallClient) GetTeamID(id string) (string, error) {
 		return c.ID == id
 	})
 	if idx != -1 {
-		return c.Users[idx].ID, nil
+		return c.Teams[idx].ID, nil
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
