@@ -36,7 +36,7 @@ func (c *OnCallClient) getAllUsers() error {
 				Page: page,
 			},
 		}
-		response, _, err := c.Client.Users.ListUsers(options)
+		response, _, err := c.Client.Users.ListUsers(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 		if err != nil {
 			return errors.Wrapf(err, "Failed to list oncall users")
 		}
@@ -120,7 +120,7 @@ func (c *OnCallClient) getAllTeams() error {
 				Page: page,
 			},
 		}
-		response, _, err := c.Client.Teams.ListTeams(options)
+		response, _, err := c.Client.Teams.ListTeams(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 		if err != nil {
 			return errors.Wrapf(err, "Failed to list oncall users")
 		}
@@ -226,7 +226,7 @@ func (c *OnCallClient) GetScheduleID(id string) (string, error) {
 	options := &onCallAPI.ListScheduleOptions{
 		Name: id,
 	}
-	response, _, err := c.Client.Schedules.ListSchedules(options)
+	response, _, err := c.Client.Schedules.ListSchedules(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 	if err != nil {
 		return "", errors.Wrapf(err, "Failed to list oncall schedules")
 	}
@@ -244,7 +244,7 @@ func (c *OnCallClient) GetSlackChannelID(name string) (string, error) {
 		ChannelName: name,
 	}
 
-	slackChannelsResponse, _, err := c.Client.SlackChannels.ListSlackChannels(options)
+	slackChannelsResponse, _, err := c.Client.SlackChannels.ListSlackChannels(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 	if err != nil {
 		return "", err
 	}
