@@ -114,7 +114,7 @@ require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260225160729-8b7042cc192e // indirect
 	github.com/grafana/incident-go v0.0.0-20261007120105-21a0e7878e02 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
-	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
+	github.com/grafana/pyroscope-go/godeltaprof v0.1.12 // indirect
 	github.com/grafana/river v0.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3 // indirect
