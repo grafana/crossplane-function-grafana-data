@@ -32,8 +32,8 @@ require (
 	cuelang.org/go v0.11.1 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
-	github.com/antchfx/htmlquery v1.3.6 // indirect
-	github.com/antchfx/xpath v1.3.6 // indirect
+	github.com/antchfx/htmlquery v1.3.7 // indirect
+	github.com/antchfx/xpath v1.3.9 // indirect
 	github.com/apache/arrow-go/v18 v18.5.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
