@@ -6,7 +6,6 @@ import (
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
 	"github.com/grafana/crossplane-provider-grafana/v2/apis/cluster/v1beta1"
-	"github.com/grafana/grafana-app-sdk/k8s"
 	assertsapi "github.com/grafana/grafana-asserts-public-clients/go/gcom"
 	"github.com/grafana/grafana-com-public-clients/go/gcom"
 	goapi "github.com/grafana/grafana-openapi-client-go/client"
@@ -22,16 +21,16 @@ import (
 
 // Client struct with all known clients (~copy/paste from TF provider)
 type Client struct {
-	GrafanaAPI            *goapi.GrafanaHTTPAPI
-	GrafanaAppPlatformAPI *k8s.ClientRegistry
-	GrafanaCloudAPI       *gcom.APIClient
-	SMAPI                 *SMAPI.Client
-	MLAPI                 *mlapi.Client
-	OnCallClient          *onCallAPI.Client
-	SLOClient             *slo.APIClient
-	AssertsAPIClient      *assertsapi.APIClient
-	K6APIClient           *k6.APIClient
+	GrafanaAPI       *goapi.GrafanaHTTPAPI
+	GrafanaCloudAPI  *gcom.APIClient
+	SMAPI            *SMAPI.Client
+	MLAPI            *mlapi.Client
+	OnCallClient     *onCallAPI.Client
+	SLOClient        *slo.APIClient
+	AssertsAPIClient *assertsapi.APIClient
+	K6APIClient      *k6.APIClient
 	// in internal package
+	// GrafanaAppPlatformAPI *appplatformclient.Client
 	// CloudProviderAPI      *cloudproviderapi.Client
 	// ConnectionsAPIClient  *connectionsapi.Client
 	// FleetManagementClient *fleetmanagementapi.Client
@@ -56,15 +55,14 @@ func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, credentials map[st
 	}
 
 	client := Client{
-		GrafanaAPI:            clients.GrafanaAPI,
-		GrafanaAppPlatformAPI: clients.GrafanaAppPlatformAPI,
-		GrafanaCloudAPI:       clients.GrafanaCloudAPI,
-		SMAPI:                 clients.SMAPI,
-		MLAPI:                 clients.MLAPI,
-		OnCallClient:          clients.OnCallClient,
-		SLOClient:             clients.SLOClient,
-		AssertsAPIClient:      clients.AssertsAPIClient,
-		K6APIClient:           clients.K6APIClient,
+		GrafanaAPI:       clients.GrafanaAPI,
+		GrafanaCloudAPI:  clients.GrafanaCloudAPI,
+		SMAPI:            clients.SMAPI,
+		MLAPI:            clients.MLAPI,
+		OnCallClient:     clients.OnCallClient,
+		SLOClient:        clients.SLOClient,
+		AssertsAPIClient: clients.AssertsAPIClient,
+		K6APIClient:      clients.K6APIClient,
 	}
 
 	return &client, nil

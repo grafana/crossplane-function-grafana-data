@@ -142,7 +142,7 @@ func (c *GrafanaClient) GetServiceAccounts(names []string) ([]string, error) {
 
 // GetTeam will return the ID for a team name
 func (c *GrafanaClient) GetTeam(name string) (string, error) {
-	_, err := c.Client.Teams.GetTeamByID(name)
+	_, err := c.Client.Teams.GetTeamByID(teams.NewGetTeamByIDParams().WithTeamID(name))
 	if err == nil {
 		return name, nil
 	}
@@ -157,8 +157,8 @@ func (c *GrafanaClient) GetTeam(name string) (string, error) {
 		return "", err
 	}
 	for _, r := range respBySearch.GetPayload().Teams {
-		if r.Name == name {
-			return strconv.FormatInt(r.ID, 10), nil
+		if r.Name != nil && *r.Name == name && r.ID != nil {
+			return strconv.FormatInt(*r.ID, 10), nil
 		}
 	}
 
@@ -174,8 +174,8 @@ func (c *GrafanaClient) GetRoleUID(name string) (string, error) {
 	}
 
 	for _, r := range resp.Payload {
-		if r.Name == name {
-			return r.UID, nil
+		if r.Name != nil && *r.Name == name && r.UID != nil {
+			return *r.UID, nil
 		}
 	}
 

@@ -71,7 +71,7 @@ func (c *AlertingClient) GetOnCallURL(name string) (string, error) {
 				Page: page,
 			},
 		}
-		response, _, err := c.OnCallClient.Integrations.ListIntegrations(options)
+		response, _, err := c.OnCallClient.Integrations.ListIntegrations(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 		if err != nil {
 			return "", errors.Wrapf(err, "Failed to list oncall integrations")
 		}
