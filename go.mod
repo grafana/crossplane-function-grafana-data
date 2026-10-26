@@ -104,14 +104,14 @@ require (
 	github.com/grafana/grafana-app-sdk v0.56.4 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.56.2 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.292.0 // indirect
-	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.0-20250925121631-89b988ca553e // indirect
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20260323093832-0cb690db9135 // indirect
-	github.com/grafana/grafana/apps/alerting/rules v0.0.0-20260713221834-2784e45f56da // indirect
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20260424050122-76eba5631b44 // indirect
-	github.com/grafana/grafana/apps/playlist v0.0.0-20260401194530-e00074701ba3 // indirect
-	github.com/grafana/grafana/apps/provisioning v0.0.0-20260611010225-797a1ed3cfdb // indirect
-	github.com/grafana/grafana/apps/secret v0.0.0-20260224124528-75b1e0cf0f79 // indirect
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20260225160729-8b7042cc192e // indirect
+	github.com/grafana/grafana/apps/alerting/alertenrichment v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/alerting/rules v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/dashboard v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/playlist v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/provisioning v0.0.85-test // indirect
+	github.com/grafana/grafana/apps/secret v0.0.85-test // indirect
+	github.com/grafana/grafana/pkg/apimachinery v0.0.85-test // indirect
 	github.com/grafana/incident-go v0.0.0-20261007120105-21a0e7878e02 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.9 // indirect
