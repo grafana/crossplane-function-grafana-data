@@ -19,24 +19,18 @@ type OnCallClient struct {
 	Users  []*onCallAPI.User
 	Teams  []*onCallAPI.Team
 
-	// cacheKey scopes the shared user and team caches to one OnCall instance
-	// and its credentials. Empty disables the caches.
+	// cacheKey scopes the shared user and team caches to one provider config
+	// and its resolved configuration (see clients.Client.CacheKey). Empty
+	// disables the caches.
 	cacheKey string
 }
 
-// NewOnCallClient returns a client with convenience methods. providerConfigName
-// scopes the shared user and team caches, so different OnCall instances or
-// tokens never share a list.
-func NewOnCallClient(client *onCallAPI.Client, providerConfigName string) *OnCallClient {
-	key := providerConfigName
-	if client != nil {
-		if u := client.BaseURL(); u != nil {
-			key += "|" + u.String()
-		}
-	}
+// NewOnCallClient returns a client with convenience methods. cacheKey scopes
+// the shared user and team caches; empty disables them.
+func NewOnCallClient(client *onCallAPI.Client, cacheKey string) *OnCallClient {
 	return &OnCallClient{
 		Client:   client,
-		cacheKey: key,
+		cacheKey: cacheKey,
 	}
 }
 
@@ -59,14 +53,16 @@ func (c *OnCallClient) ensureUsers() error {
 	return nil
 }
 
-// refreshUsers reloads c.Users after a lookup miss. It reports whether a new
-// list was loaded; the shared cache limits how often that happens.
+// refreshUsers reloads c.Users after a lookup miss. The shared cache only
+// refetches if its list is older than onCallListMinRefresh, but it may hold a
+// newer list than c.Users (refreshed by another run), so callers should retry
+// their lookup. It reports whether c.Users may have changed.
 func (c *OnCallClient) refreshUsers() (bool, error) {
 	if c.cacheKey == "" {
 		return false, nil
 	}
-	users, refreshed, err := onCallUsersCache.refresh(c.cacheKey, c.getAllUsers)
-	if err != nil || !refreshed {
+	users, err := onCallUsersCache.refresh(c.cacheKey, c.getAllUsers)
+	if err != nil {
 		return false, err
 	}
 	c.Users = users
@@ -92,14 +88,13 @@ func (c *OnCallClient) ensureTeams() error {
 	return nil
 }
 
-// refreshTeams reloads c.Teams after a lookup miss. It reports whether a new
-// list was loaded; the shared cache limits how often that happens.
+// refreshTeams is refreshUsers for teams.
 func (c *OnCallClient) refreshTeams() (bool, error) {
 	if c.cacheKey == "" {
 		return false, nil
 	}
-	teams, refreshed, err := onCallTeamsCache.refresh(c.cacheKey, c.getAllTeams)
-	if err != nil || !refreshed {
+	teams, err := onCallTeamsCache.refresh(c.cacheKey, c.getAllTeams)
+	if err != nil {
 		return false, err
 	}
 	c.Teams = teams

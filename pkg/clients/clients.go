@@ -2,6 +2,9 @@
 package clients
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"strconv"
 
 	onCallAPI "github.com/grafana/amixr-api-go-client"
@@ -29,6 +32,13 @@ type Client struct {
 	SLOClient        *slo.APIClient
 	AssertsAPIClient *assertsapi.APIClient
 	K6APIClient      *k6.APIClient
+
+	// CacheKey identifies the provider config and its resolved configuration
+	// (URLs and credentials) for caches shared across function runs. It changes
+	// when the provider config points at another instance or its credentials
+	// change. It is a hash and never contains credentials.
+	CacheKey string
+
 	// in internal package
 	// GrafanaAppPlatformAPI *appplatformclient.Client
 	// CloudProviderAPI      *cloudproviderapi.Client
@@ -63,9 +73,21 @@ func NewClientsFromProviderConfig(pc *v1beta1.ProviderConfig, credentials map[st
 		SLOClient:        clients.SLOClient,
 		AssertsAPIClient: clients.AssertsAPIClient,
 		K6APIClient:      clients.K6APIClient,
+		CacheKey:         cacheKey(pc.GetName(), crcfg),
 	}
 
 	return &client, nil
+}
+
+// cacheKey returns the provider config name plus a hash of its resolved
+// configuration. encoding/json sorts map keys, so the hash is stable.
+func cacheKey(name string, cfg map[string]any) string {
+	b, err := json.Marshal(cfg)
+	if err != nil {
+		return name
+	}
+	sum := sha256.Sum256(b)
+	return name + "/" + hex.EncodeToString(sum[:8])
 }
 
 // createCrossplaneConfiguration from the Crossplane ProviderConfig
