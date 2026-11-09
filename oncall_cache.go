@@ -23,16 +23,37 @@ const (
 	// blocks further fetches for the same key, so a rate-limited API is not
 	// hit again by every function run.
 	onCallListFailureBackoff = 30 * time.Second
+
+	// onCallListMaxStale is how old a list may get while fetches keep failing
+	// before it stops being served. After that lookups fail with the fetch
+	// error, so a persistent problem (for example a revoked token) surfaces
+	// instead of being hidden behind an old list.
+	onCallListMaxStale = time.Hour
 )
+
+var onCallListTimings = cacheTimings{
+	TTL:            onCallListTTL,
+	MinRefresh:     onCallListMinRefresh,
+	FailureBackoff: onCallListFailureBackoff,
+	MaxStale:       onCallListMaxStale,
+}
 
 // The function runs as a long-lived server, so these caches are shared by all
 // function runs in the process. Without them every run fetched every page of
 // the OnCall user and team lists, which got rate limited (HTTP 429) once
 // enough OnCall resources were reconciled.
 var (
-	onCallUsersCache = newListCache[*onCallAPI.User](onCallListTTL, onCallListMinRefresh, onCallListFailureBackoff)
-	onCallTeamsCache = newListCache[*onCallAPI.Team](onCallListTTL, onCallListMinRefresh, onCallListFailureBackoff)
+	onCallUsersCache = newListCache[*onCallAPI.User](onCallListTimings)
+	onCallTeamsCache = newListCache[*onCallAPI.Team](onCallListTimings)
 )
+
+// cacheTimings configures a listCache.
+type cacheTimings struct {
+	TTL            time.Duration // reuse a list this long before fetching it again
+	MinRefresh     time.Duration // minimum list age before a lookup miss may refetch
+	FailureBackoff time.Duration // no new fetch this long after a failed one
+	MaxStale       time.Duration // stop serving a list this old when fetches fail
+}
 
 type listEntry[T any] struct {
 	items     []T
@@ -43,42 +64,38 @@ type listEntry[T any] struct {
 }
 
 // listCache caches full lists per key:
-//   - a list is reused for ttl, then fetched again
+//   - a list is reused for TTL, then fetched again
 //   - concurrent fetches for the same key share one request
-//   - if a fetch fails, the previous list (if any) keeps being served, and no
-//     new fetch is attempted for failureBackoff
+//   - if a fetch fails, the previous list keeps being served until it is
+//     MaxStale old, and no new fetch is attempted for FailureBackoff
 type listCache[T any] struct {
-	ttl            time.Duration
-	minRefresh     time.Duration
-	failureBackoff time.Duration
-	now            func() time.Time
+	timings cacheTimings
+	now     func() time.Time
 
 	mu      sync.Mutex
 	entries map[string]listEntry[T]
 	group   singleflight.Group
 }
 
-func newListCache[T any](ttl, minRefresh, failureBackoff time.Duration) *listCache[T] {
+func newListCache[T any](timings cacheTimings) *listCache[T] {
 	return &listCache[T]{
-		ttl:            ttl,
-		minRefresh:     minRefresh,
-		failureBackoff: failureBackoff,
-		now:            time.Now,
-		entries:        map[string]listEntry[T]{},
+		timings: timings,
+		now:     time.Now,
+		entries: map[string]listEntry[T]{},
 	}
 }
 
 // get returns the list for key, fetching it if it is missing or older than
-// ttl.
+// TTL.
 func (c *listCache[T]) get(key string, fetch func() ([]T, error)) ([]T, error) {
-	return c.load(key, c.ttl, fetch)
+	return c.load(key, c.timings.TTL, fetch)
 }
 
 // refresh returns the list for key, fetching it again unless it is younger
-// than minRefresh. Callers should retry their lookup against the returned
+// than MinRefresh. Callers should retry their lookup against the returned
 // list either way: another run may have refreshed it moments ago.
 func (c *listCache[T]) refresh(key string, fetch func() ([]T, error)) ([]T, error) {
-	return c.load(key, c.minRefresh, fetch)
+	return c.load(key, c.timings.MinRefresh, fetch)
 }
 
 // load returns the cached list if it is younger than maxAge, and fetches it
@@ -100,35 +117,35 @@ func (c *listCache[T]) load(key string, maxAge time.Duration, fetch func() ([]T,
 	return v.([]T), nil
 }
 
-// cached returns the list for key if it was fetched less than maxAge ago, or,
-// during the failure backoff, the last good list (or the last error).
+// cached returns the list for key if it was fetched less than maxAge ago or,
+// during the failure backoff, if it may still be served stale.
 func (c *listCache[T]) cached(key string, maxAge time.Duration) ([]T, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	e, ok := c.entries[key]
-	if !ok {
+	if !ok || e.fetchedAt.IsZero() {
 		return nil, false
 	}
 	now := c.now()
-	if !e.fetchedAt.IsZero() && now.Sub(e.fetchedAt) < maxAge {
+	if now.Sub(e.fetchedAt) < maxAge {
 		return e.items, true
 	}
-	if !e.failedAt.IsZero() && now.Sub(e.failedAt) < c.failureBackoff && !e.fetchedAt.IsZero() {
+	if c.inBackoff(e, now) && c.usableStale(e, now) {
 		return e.items, true
 	}
 	return nil, false
 }
 
-// fetch runs fetch and stores the result. On failure it keeps the previous
-// list and returns it if there is one; otherwise it returns the error, or the
-// last error while the failure backoff is active.
+// fetch runs fetch and stores the result. On failure it serves the previous
+// list while it is younger than MaxStale, and returns the error otherwise.
+// During the failure backoff it returns the last error without fetching.
 func (c *listCache[T]) fetch(key string, fetch func() ([]T, error)) ([]T, error) {
 	c.mu.Lock()
 	e := c.entries[key]
-	backoff := !e.failedAt.IsZero() && c.now().Sub(e.failedAt) < c.failureBackoff
+	backoff := c.inBackoff(e, c.now())
 	c.mu.Unlock()
 	if backoff {
-		// No previous list, otherwise cached() would have returned it.
+		// No usable list, otherwise cached() would have returned it.
 		return nil, e.err
 	}
 
@@ -136,15 +153,26 @@ func (c *listCache[T]) fetch(key string, fetch func() ([]T, error)) ([]T, error)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+	now := c.now()
 	e = c.entries[key]
 	if err != nil {
-		e.failedAt, e.err = c.now(), err
+		e.failedAt, e.err = now, err
 		c.entries[key] = e
-		if !e.fetchedAt.IsZero() {
+		if c.usableStale(e, now) {
 			return e.items, nil
 		}
 		return nil, err
 	}
-	c.entries[key] = listEntry[T]{items: items, fetchedAt: c.now()}
+	c.entries[key] = listEntry[T]{items: items, fetchedAt: now}
 	return items, nil
+}
+
+func (c *listCache[T]) inBackoff(e listEntry[T], now time.Time) bool {
+	return !e.failedAt.IsZero() && now.Sub(e.failedAt) < c.timings.FailureBackoff
+}
+
+// usableStale reports whether e holds a list young enough to serve when
+// fetching fails.
+func (c *listCache[T]) usableStale(e listEntry[T], now time.Time) bool {
+	return !e.fetchedAt.IsZero() && now.Sub(e.fetchedAt) < c.timings.MaxStale
 }

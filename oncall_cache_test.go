@@ -33,7 +33,12 @@ func (c *fakeClock) Advance(d time.Duration) {
 }
 
 func newTestCache[T any](clock *fakeClock) *listCache[T] {
-	c := newListCache[T](10*time.Minute, time.Minute, 30*time.Second)
+	c := newListCache[T](cacheTimings{
+		TTL:            10 * time.Minute,
+		MinRefresh:     time.Minute,
+		FailureBackoff: 30 * time.Second,
+		MaxStale:       time.Hour,
+	})
 	c.now = clock.Now
 	return c
 }
@@ -52,6 +57,8 @@ func always(items ...string) func(int) ([]string, error) {
 }
 
 var errRateLimited = errors.New("429 Too Many Requests")
+
+const oldItem = "old"
 
 func TestListCache(t *testing.T) {
 	t.Run("ReusesListWithinTTL", func(t *testing.T) {
@@ -141,7 +148,7 @@ func TestListCache(t *testing.T) {
 		fetch := countingFetch(&calls, func(n int) ([]string, error) {
 			switch n {
 			case 1:
-				return []string{"old"}, nil
+				return []string{oldItem}, nil
 			case 2:
 				return nil, errRateLimited
 			default:
@@ -151,11 +158,11 @@ func TestListCache(t *testing.T) {
 
 		_, _ = c.get("k", fetch)
 		clock.Advance(10 * time.Minute) // TTL expired, refetch fails
-		if got, err := c.get("k", fetch); err != nil || got[0] != "old" {
+		if got, err := c.get("k", fetch); err != nil || got[0] != oldItem {
 			t.Fatalf("get after failed refetch = %v, %v; want [old], nil", got, err)
 		}
 		clock.Advance(10 * time.Second) // inside backoff: no new fetch
-		if got, err := c.get("k", fetch); err != nil || got[0] != "old" {
+		if got, err := c.get("k", fetch); err != nil || got[0] != oldItem {
 			t.Fatalf("get during backoff = %v, %v; want [old], nil", got, err)
 		}
 		if calls != 2 {
@@ -164,6 +171,36 @@ func TestListCache(t *testing.T) {
 		clock.Advance(20 * time.Second) // backoff over: fetch again
 		if got, err := c.get("k", fetch); err != nil || got[0] != "new" {
 			t.Fatalf("get after backoff = %v, %v; want [new], nil", got, err)
+		}
+	})
+
+	t.Run("StopsServingStaleListAfterMaxStale", func(t *testing.T) {
+		clock := &fakeClock{now: time.Unix(0, 0)}
+		c := newTestCache[string](clock)
+		calls := 0
+		fetch := countingFetch(&calls, func(n int) ([]string, error) {
+			if n == 1 {
+				return []string{oldItem}, nil
+			}
+			return nil, errRateLimited // every refetch fails
+		})
+
+		_, _ = c.get("k", fetch)
+		clock.Advance(59 * time.Minute)
+		if got, err := c.get("k", fetch); err != nil || got[0] != oldItem {
+			t.Fatalf("get at 59m = %v, %v; want [old], nil", got, err)
+		}
+		clock.Advance(time.Minute) // list is now 1h old
+		if _, err := c.get("k", fetch); !errors.Is(err, errRateLimited) {
+			t.Fatalf("get at 60m: err = %v, want %v", err, errRateLimited)
+		}
+		clock.Advance(10 * time.Second) // inside backoff: still the error, no fetch
+		before := calls
+		if _, err := c.get("k", fetch); !errors.Is(err, errRateLimited) {
+			t.Errorf("get during backoff past MaxStale: err = %v, want %v", err, errRateLimited)
+		}
+		if calls != before {
+			t.Errorf("fetch calls during backoff = %d, want %d", calls, before)
 		}
 	})
 
@@ -192,7 +229,7 @@ func TestListCache(t *testing.T) {
 		calls := 0
 		fetch := countingFetch(&calls, func(n int) ([]string, error) {
 			if n == 1 {
-				return []string{"old"}, nil
+				return []string{oldItem}, nil
 			}
 			return []string{"new"}, nil
 		})
