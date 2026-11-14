@@ -20,6 +20,7 @@ require (
 	github.com/grafana/synthetic-monitoring-api-go-client v0.20.5
 	github.com/grafana/terraform-provider-grafana/v4 v4.50.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
+	golang.org/x/sync v0.24.0
 	google.golang.org/protobuf v1.36.12
 	k8s.io/api v0.37.0
 	k8s.io/apimachinery v0.37.0
@@ -229,7 +230,6 @@ require (
 	golang.org/x/mod v0.41.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
 	golang.org/x/telemetry v0.0.0-20260924152758-ed294f943157 // indirect
 	golang.org/x/term v0.47.0 // indirect

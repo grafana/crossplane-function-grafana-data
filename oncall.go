@@ -18,16 +18,90 @@ type OnCallClient struct {
 	Client *onCallAPI.Client
 	Users  []*onCallAPI.User
 	Teams  []*onCallAPI.Team
+
+	// cacheKey scopes the shared user and team caches to one provider config
+	// and its resolved configuration (see clients.Client.CacheKey). Empty
+	// disables the caches.
+	cacheKey string
 }
 
-// NewOnCallClient returns a client with convenience methods
-func NewOnCallClient(client *onCallAPI.Client) *OnCallClient {
+// NewOnCallClient returns a client with convenience methods. cacheKey scopes
+// the shared user and team caches; empty disables them.
+func NewOnCallClient(client *onCallAPI.Client, cacheKey string) *OnCallClient {
 	return &OnCallClient{
-		Client: client,
+		Client:   client,
+		cacheKey: cacheKey,
 	}
 }
 
-func (c *OnCallClient) getAllUsers() error {
+// ensureUsers fills c.Users if it is empty, from the shared cache when enabled.
+func (c *OnCallClient) ensureUsers() error {
+	if len(c.Users) > 0 {
+		return nil
+	}
+	var users []*onCallAPI.User
+	var err error
+	if c.cacheKey == "" {
+		users, err = c.getAllUsers()
+	} else {
+		users, err = onCallUsersCache.get(c.cacheKey, c.getAllUsers)
+	}
+	if err != nil {
+		return err
+	}
+	c.Users = users
+	return nil
+}
+
+// refreshUsers reloads c.Users after a lookup miss. The shared cache only
+// refetches if its list is older than onCallListMinRefresh, but it may hold a
+// newer list than c.Users (refreshed by another run), so callers should retry
+// their lookup. It reports whether c.Users may have changed.
+func (c *OnCallClient) refreshUsers() (bool, error) {
+	if c.cacheKey == "" {
+		return false, nil
+	}
+	users, err := onCallUsersCache.refresh(c.cacheKey, c.getAllUsers)
+	if err != nil {
+		return false, err
+	}
+	c.Users = users
+	return true, nil
+}
+
+// ensureTeams fills c.Teams if it is empty, from the shared cache when enabled.
+func (c *OnCallClient) ensureTeams() error {
+	if len(c.Teams) > 0 {
+		return nil
+	}
+	var teams []*onCallAPI.Team
+	var err error
+	if c.cacheKey == "" {
+		teams, err = c.getAllTeams()
+	} else {
+		teams, err = onCallTeamsCache.get(c.cacheKey, c.getAllTeams)
+	}
+	if err != nil {
+		return err
+	}
+	c.Teams = teams
+	return nil
+}
+
+// refreshTeams is refreshUsers for teams.
+func (c *OnCallClient) refreshTeams() (bool, error) {
+	if c.cacheKey == "" {
+		return false, nil
+	}
+	teams, err := onCallTeamsCache.refresh(c.cacheKey, c.getAllTeams)
+	if err != nil {
+		return false, err
+	}
+	c.Teams = teams
+	return true, nil
+}
+
+func (c *OnCallClient) getAllUsers() ([]*onCallAPI.User, error) {
 	allUsers := []*onCallAPI.User{}
 	page := 1
 	for {
@@ -38,7 +112,7 @@ func (c *OnCallClient) getAllUsers() error {
 		}
 		response, _, err := c.Client.Users.ListUsers(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 		if err != nil {
-			return errors.Wrapf(err, "Failed to list oncall users")
+			return nil, errors.Wrapf(err, "Failed to list oncall users")
 		}
 
 		allUsers = append(allUsers, response.Users...)
@@ -48,8 +122,7 @@ func (c *OnCallClient) getAllUsers() error {
 		}
 		page++
 	}
-	c.Users = allUsers
-	return nil
+	return allUsers, nil
 }
 
 // Process processes fields of different kinds
@@ -111,7 +184,7 @@ func (c *OnCallClient) Process(desired *resource.DesiredComposed) error {
 	return nil
 }
 
-func (c *OnCallClient) getAllTeams() error {
+func (c *OnCallClient) getAllTeams() ([]*onCallAPI.Team, error) {
 	allTeams := []*onCallAPI.Team{}
 	page := 1
 	for {
@@ -122,7 +195,7 @@ func (c *OnCallClient) getAllTeams() error {
 		}
 		response, _, err := c.Client.Teams.ListTeams(options) //nolint:bodyclose // The OnCall client's Do method closes the response body.
 		if err != nil {
-			return errors.Wrapf(err, "Failed to list oncall users")
+			return nil, errors.Wrapf(err, "Failed to list oncall teams")
 		}
 
 		allTeams = append(allTeams, response.Teams...)
@@ -132,8 +205,7 @@ func (c *OnCallClient) getAllTeams() error {
 		}
 		page++
 	}
-	c.Teams = allTeams
-	return nil
+	return allTeams, nil
 }
 
 // GetUsers looks up users and returns the IDs
@@ -164,61 +236,88 @@ func (c *OnCallClient) GetRollingUsers(val [][]string) ([][]string, error) {
 
 // GetUserID looks up a user
 func (c *OnCallClient) GetUserID(id string) (string, error) {
-	// populate the list if the list is empty
-	if len(c.Users) == 0 {
-		err := c.getAllUsers()
-		if err != nil {
-			return "", err
+	if err := c.ensureUsers(); err != nil {
+		return "", err
+	}
+	if userID, ok := findUserID(c.Users, id); ok {
+		return userID, nil
+	}
+
+	// The cached list may predate the user, so reload it once and retry.
+	refreshed, err := c.refreshUsers()
+	if err != nil {
+		return "", err
+	}
+	if refreshed {
+		if userID, ok := findUserID(c.Users, id); ok {
+			return userID, nil
 		}
-	}
-
-	// check if the provided ID exists
-	idx := slices.IndexFunc(c.Users, func(c *onCallAPI.User) bool {
-		return c.ID == id
-	})
-	if idx != -1 {
-		return c.Users[idx].ID, nil
-	}
-
-	// if the provided ID does not exist, try to look up by username or email
-	usernameEmailIDx := slices.IndexFunc(c.Users, func(c *onCallAPI.User) bool {
-		return c.Username == id || c.Email == id
-	})
-
-	if usernameEmailIDx != -1 {
-		return c.Users[usernameEmailIDx].ID, nil
 	}
 
 	return "", errors.Errorf("Could not find user with name %s", id)
 }
 
-// GetTeamID looks up a team
-func (c *OnCallClient) GetTeamID(id string) (string, error) {
-	if len(c.Teams) == 0 {
-		err := c.getAllTeams()
-		if err != nil {
-			return "", err
-		}
-	}
-
+func findUserID(users []*onCallAPI.User, id string) (string, bool) {
 	// check if the provided ID exists
-	idx := slices.IndexFunc(c.Teams, func(c *onCallAPI.Team) bool {
-		return c.ID == id
+	idx := slices.IndexFunc(users, func(u *onCallAPI.User) bool {
+		return u.ID == id
 	})
 	if idx != -1 {
-		return c.Teams[idx].ID, nil
+		return users[idx].ID, true
 	}
 
 	// if the provided ID does not exist, try to look up by username or email
-	teamEmailIDx := slices.IndexFunc(c.Teams, func(c *onCallAPI.Team) bool {
-		return c.Name == id || c.Email == id
+	idx = slices.IndexFunc(users, func(u *onCallAPI.User) bool {
+		return u.Username == id || u.Email == id
 	})
+	if idx != -1 {
+		return users[idx].ID, true
+	}
 
-	if teamEmailIDx != -1 {
-		return c.Teams[teamEmailIDx].ID, nil
+	return "", false
+}
+
+// GetTeamID looks up a team
+func (c *OnCallClient) GetTeamID(id string) (string, error) {
+	if err := c.ensureTeams(); err != nil {
+		return "", err
+	}
+	if teamID, ok := findTeamID(c.Teams, id); ok {
+		return teamID, nil
+	}
+
+	// The cached list may predate the team, so reload it once and retry.
+	refreshed, err := c.refreshTeams()
+	if err != nil {
+		return "", err
+	}
+	if refreshed {
+		if teamID, ok := findTeamID(c.Teams, id); ok {
+			return teamID, nil
+		}
 	}
 
 	return "", errors.Errorf("Could not find team with ID %s", id)
+}
+
+func findTeamID(teams []*onCallAPI.Team, id string) (string, bool) {
+	// check if the provided ID exists
+	idx := slices.IndexFunc(teams, func(t *onCallAPI.Team) bool {
+		return t.ID == id
+	})
+	if idx != -1 {
+		return teams[idx].ID, true
+	}
+
+	// if the provided ID does not exist, try to look up by name or email
+	idx = slices.IndexFunc(teams, func(t *onCallAPI.Team) bool {
+		return t.Name == id || t.Email == id
+	})
+	if idx != -1 {
+		return teams[idx].ID, true
+	}
+
+	return "", false
 }
 
 // GetScheduleID looks up a schedule

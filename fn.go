@@ -77,7 +77,7 @@ func (f *Function) RunFunction(_ context.Context, req *fnv1.RunFunctionRequest) 
 
 		switch gvk.Group {
 		case "oncall.grafana.crossplane.io":
-			if err := NewOnCallClient(clientMap[providerConfigName].OnCallClient).Process(desired); err != nil {
+			if err := NewOnCallClient(clientMap[providerConfigName].OnCallClient, clientMap[providerConfigName].CacheKey).Process(desired); err != nil {
 				response.Warning(rsp, err).TargetCompositeAndClaim()
 			}
 
