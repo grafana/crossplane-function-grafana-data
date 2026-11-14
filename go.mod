@@ -21,8 +21,8 @@ require (
 	github.com/grafana/terraform-provider-grafana/v4 v4.50.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.0
 	google.golang.org/protobuf v1.36.12
-	k8s.io/api v0.37.0
-	k8s.io/apimachinery v0.37.0
+	k8s.io/api v0.37.2
+	k8s.io/apimachinery v0.37.2
 	sigs.k8s.io/controller-tools v0.23.0
 )
 
