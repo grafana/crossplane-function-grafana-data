@@ -2,7 +2,7 @@
 
 # We use the latest Go 1.x version unless asked to use something else.
 # The GitHub Actions CI job sets this argument for a consistent Go version.
-ARG GO_VERSION=1.27.4@sha256:205c7636d74e0ffbe3d007162df7d74f859f5a8c8322dfb9f907977686c126cf
+ARG GO_VERSION=1.27.4@sha256:5f1b98fa02fe396ebce2a0227a0e08309e11792915b9dd2e1f71053d7e7e6666
 
 # Setup the base environment. The BUILDPLATFORM is set automatically by Docker.
 # The --platform=${BUILDPLATFORM} flag tells Docker to build the function using
@@ -40,7 +40,7 @@ RUN --mount=target=. \
 
 # Produce the Function image. We use a very lightweight 'distroless' image that
 # does not include any of the build tools used in previous stages.
-FROM gcr.io/distroless/static-debian13:nonroot@sha256:aafe993665bf6200db38a02c11a9351e782a84b6a45e7f33b6695638c88e3931 AS image
+FROM gcr.io/distroless/static-debian13:nonroot@sha256:8ce6dd87e9823c5b48dcfb2c8604714ccb351ce59607327bcc4957448da279b5 AS image
 WORKDIR /
 COPY --from=build /function /function
 EXPOSE 9443
